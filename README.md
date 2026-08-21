@@ -1,6 +1,6 @@
 # Agent Workflow Factory
 
-Agent Workflow Factory 是 the user 的 Harness 層：它把 Context Harness、任務狀態、經驗流水線、runtime adapter、benchmark 與安裝流程組成一個可以獨立版控、安裝、診斷與封存的專案。
+Agent Workflow Factory 是一個通用的 Harness 層：它把 Context Harness、任務狀態、經驗流水線、runtime adapter、benchmark 與安裝流程組成一個可以獨立版控、安裝、診斷與封存的專案。
 
 它不是某一家模型的設定檔，也不是另一份全域規則。它負責「怎麼把工作系統組起來、怎麼選資料、怎麼交給 runtime 執行、怎麼留下可驗證結果」。
 
@@ -17,7 +17,7 @@ Factory 與來源資料刻意分離，避免把設定、經驗與執行器混成
 
 Factory 不複製或接管任何 runtime 設定，也不把 dotfile 內容當成自己的 canonical source。安裝時透過 source-root 設定把它們接起來；因此可以換機、換路徑或換 runtime，而不必重寫 Factory 本身。
 
-`Project/AI/monika` 永遠是明確排除的 non-entry，不是本工廠的資料來源、fallback 或測試來源。
+使用者可以指定任何 non-entry path；它永遠不是本工廠的資料來源、fallback 或測試來源。
 
 ## 核心工作流
 
@@ -63,7 +63,7 @@ agent-workflow experience export --output ./experience-pack
 agent-workflow experience import --input ./experience-pack --map OLD=NEW
 ```
 
-低風險的 observation、整理與 bundle 產生可以自動化；要把候選經驗寫成正式 Personal Model 或 shared rule，仍保留 human gate。
+低風險的 observation、整理與 bundle 產生可以自動化；要把候選經驗寫成使用者自己的 Personal Model 或 shared rule，仍保留 human gate。
 
 ## Benchmark 與 Waza
 
@@ -119,11 +119,13 @@ Factory installer 只建立使用者層級入口，不使用 sudo，也不偷偷
 ```bash
 ./install.sh --dry-run \
   --workspace-root /path/to/agent-workspace \
-  --dotfile-root /path/to/dotfile
+  --dotfile-root /path/to/dotfile \
+  --non-entry-root /path/to/non-entry
 
 ./install.sh \
   --workspace-root /path/to/agent-workspace \
-  --dotfile-root /path/to/dotfile
+  --dotfile-root /path/to/dotfile \
+  --non-entry-root /path/to/non-entry
 ```
 
 安裝結果包含：
@@ -132,7 +134,7 @@ Factory installer 只建立使用者層級入口，不使用 sudo，也不偷偷
 - `~/.config/agent-experience/factory.env`
 - Context Harness binary 的 build/install link（缺少時才建立）
 
-`factory.env` 只保存 source roots；執行時仍可用 `MIYAGO_AGENT_WORKSPACE_ROOT`、`MIYAGO_DOTFILE_ROOT`、`MIYAGO_CONTEXT_HARNESS_BIN` 覆蓋。這使 Factory 本身不依賴 the user 的固定目錄。
+`factory.env` 只保存 source roots；執行時仍可用 `AGENT_FACTORY_WORKSPACE_ROOT`、`AGENT_FACTORY_DOTFILE_ROOT`、`AGENT_CONTEXT_HARNESS_BIN` 與 `AGENT_FACTORY_RUNTIME_CONFIG_DIR` 覆蓋。這使 Factory 不依賴任何特定使用者的固定目錄。
 
 安裝後先執行：
 

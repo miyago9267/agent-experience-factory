@@ -48,7 +48,7 @@ for runtime in "${runtime_list[@]}"; do
       result="$output_root/${runtime}-${scenario}-${trial}.yaml"
       log="$result.log"
       set +e
-      MIYAGO_PLUGIN_ID="$runtime" "$factory_root/plugins/runtime-adapter.sh" run \
+      AGENT_PLUGIN_ID="$runtime" "$factory_root/plugins/runtime-adapter.sh" run \
         --prompt-file "$prompt_file" \
         --cwd "$context_cwd" \
         --context-task "$context_task" \

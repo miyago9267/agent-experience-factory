@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 factory_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
-workspace_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
+workspace_root="${AGENT_FACTORY_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
 entrypoint="$factory_root/scripts/agent-workflow"
 result_path="$(mktemp -t agent-workflow-plugin-result.XXXXXX.yaml)"
 

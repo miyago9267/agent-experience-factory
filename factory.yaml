@@ -3,27 +3,27 @@ kind: agent-workflow-factory
 factory_id: agent-experience-factory
 factory_version: 0.1.0
 core:
-  workspace_root: ${MIYAGO_AGENT_WORKSPACE_ROOT}
-  binary: ${MIYAGO_CONTEXT_HARNESS_BIN}
+  workspace_root: ${AGENT_FACTORY_WORKSPACE_ROOT}
+  binary: ${AGENT_CONTEXT_HARNESS_BIN}
 configuration:
-  dotfile_root: ${MIYAGO_DOTFILE_ROOT}
-  source_root: ${MIYAGO_DOTFILE_ROOT}/config/ai
+  dotfile_root: ${AGENT_FACTORY_DOTFILE_ROOT}
+  source_root: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai
 runtime_adapters:
   codex:
-    source: ${MIYAGO_DOTFILE_ROOT}/config/ai/codex
-    generated: ${MIYAGO_DOTFILE_ROOT}/config/ai/generated/codex/AGENTS.md
+    source: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/codex
+    generated: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/generated/codex/AGENTS.md
   claude:
-    source: ${MIYAGO_DOTFILE_ROOT}/config/ai/claude
-    generated: ${MIYAGO_DOTFILE_ROOT}/config/ai/generated/claude/AGENTS.md
+    source: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/claude
+    generated: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/generated/claude/AGENTS.md
   gemini:
-    source: ${MIYAGO_DOTFILE_ROOT}/config/ai/gemini
-    generated: ${MIYAGO_DOTFILE_ROOT}/config/ai/generated/gemini/GEMINI.md
+    source: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/gemini
+    generated: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/generated/gemini/GEMINI.md
   grok:
-    source: ${MIYAGO_DOTFILE_ROOT}/config/ai/grok
-    generated: ${MIYAGO_DOTFILE_ROOT}/config/ai/generated/grok/AGENTS.md
+    source: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/grok
+    generated: ${AGENT_FACTORY_DOTFILE_ROOT}/config/ai/generated/grok/AGENTS.md
   opencode:
-    source: ${MIYAGO_DOTFILE_ROOT}/config/opencode
-    generated: ${XDG_CONFIG_HOME}/agent-experience/AGENTS.md
+    source: ${AGENT_FACTORY_DOTFILE_ROOT}/config/opencode
+    generated: ${AGENT_FACTORY_RUNTIME_CONFIG_DIR}/AGENTS.md
 plugins:
   waza:
     manifest: plugins/waza/manifest.yaml
@@ -34,7 +34,7 @@ plugins:
     checksum: official_installer
     optional_for: mock_benchmark
 excluded_paths:
-  - ${MIYAGO_NON_ENTRY_ROOT}
+  - ${AGENT_FACTORY_NON_ENTRY_ROOT}
 data:
-  default_root: ~/.local/share/agent-experience
-  portable_pack_kind: agent-experience-experience-pack
+  default_root: ${AGENT_FACTORY_DATA_ROOT}
+  portable_pack_kind: agent-experience-pack

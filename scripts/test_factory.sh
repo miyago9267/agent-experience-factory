@@ -2,11 +2,11 @@
 set -Eeuo pipefail
 
 factory_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
-workspace_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
-dotfile_root="${MIYAGO_DOTFILE_ROOT:-$HOME/dotfile}"
-install_dir="$(mktemp -d "${TMPDIR:-/tmp}/miyago-factory-bin.XXXXXX")"
+workspace_root="${AGENT_FACTORY_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
+dotfile_root="${AGENT_FACTORY_DOTFILE_ROOT:-$HOME/dotfile}"
+install_dir="$(mktemp -d "${TMPDIR:-/tmp}/agent-experience-bin.XXXXXX")"
 install_dir="$(CDPATH='' cd -- "$install_dir" && pwd -P)"
-tmp_home="$(mktemp -d "${TMPDIR:-/tmp}/miyago-factory-home.XXXXXX")"
+tmp_home="$(mktemp -d "${TMPDIR:-/tmp}/agent-experience-home.XXXXXX")"
 rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"
 cargo_home="${CARGO_HOME:-$HOME/.cargo}"
 trap 'rm -rf "$install_dir" "$tmp_home"' EXIT
@@ -19,7 +19,8 @@ dry_run_output=$(HOME="$tmp_home" RUSTUP_HOME="$rustup_home" CARGO_HOME="$cargo_
 printf '%s\n' "$dry_run_output" | grep -Fq 'context_harness: build_required'
 HOME="$tmp_home" RUSTUP_HOME="$rustup_home" CARGO_HOME="$cargo_home" \
   "$factory_root/install.sh" --workspace-root "$workspace_root" \
-  --dotfile-root "$dotfile_root" --install-dir "$install_dir" >/dev/null
+  --dotfile-root "$dotfile_root" --runtime-config-dir "$tmp_home/.config/agent-experience" \
+  --install-dir "$install_dir" >/dev/null
 [[ -x "$tmp_home/.local/bin/miyago-context-harness" ]]
 [[ -f "$tmp_home/.config/agent-experience/factory.env" ]]
 HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_home/.config" \
@@ -32,7 +33,7 @@ factory_bin="$install_dir/agent-workflow"
 doctor_output=$(HOME="$tmp_home" "$factory_bin" doctor)
 printf '%s\n' "$doctor_output" | grep -Fq 'status: OK'
 version_output=$("$factory_bin" version)
-printf '%s\n' "$version_output" | grep -Fq 'agent-workflow-factory 0.1.0'
+printf '%s\n' "$version_output" | grep -Fq 'agent-experience-factory 0.1.0'
 runtime_list=$("$factory_bin" runtime list)
 printf '%s\n' "$runtime_list" | grep -Fxq codex
 printf '%s\n' "$runtime_list" | grep -Fxq grok

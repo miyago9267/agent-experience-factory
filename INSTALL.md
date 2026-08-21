@@ -12,7 +12,7 @@ Context Harness binary 時，從指定的 canonical workspace 自動 build/insta
 - `<non-entry-root>` 是否被排除。
 
 預設不修改 shell startup，不使用 sudo，不自動安裝 Waza，不寫入 credential。
-若透過 `MIYAGO_CONTEXT_HARNESS_BIN` 明確指定 binary，installer 不會覆蓋該路徑；缺少時會直接失敗。
+若透過 `AGENT_CONTEXT_HARNESS_BIN` 明確指定 binary，installer 不會覆蓋該路徑；缺少時會直接失敗。
 Waza 是 real benchmark 的可選外部執行器；未安裝時仍可使用 mock benchmark，
 但 `plugin health --id waza` 會明確顯示 real runner 的能力缺口。
 
@@ -21,20 +21,27 @@ Waza 是 real benchmark 的可選外部執行器；未安裝時仍可使用 mock
 ```bash
 sed -n '1,260p' INSTALL.md
 bash -n install.sh
-./install.sh --dry-run
+./install.sh --dry-run \
+  --workspace-root /path/to/agent-workspace \
+  --dotfile-root /path/to/dotfile \
+  --non-entry-root /path/to/non-entry
 ```
 
 如果 source path 不是預設位置，使用：
 
 ```bash
 ./install.sh --workspace-root /path/to/agent-workspace \
-  --dotfile-root /path/to/dotfile
+  --dotfile-root /path/to/dotfile \
+  --non-entry-root /path/to/non-entry
 ```
 
 ## 實際安裝
 
 ```bash
-./install.sh
+./install.sh \
+  --workspace-root /path/to/agent-workspace \
+  --dotfile-root /path/to/dotfile \
+  --non-entry-root /path/to/non-entry
 ```
 
 安裝器會建立或更新：
@@ -46,8 +53,8 @@ bash -n install.sh
 
 `factory.env` 只保存 workspace 與 dotfile 的 source root，讓安裝時指定的路徑在
 之後不依賴當前 shell 環境仍能生效。若要指定配置目錄，可使用
-`--config-dir PATH`；環境變數 `MIYAGO_AGENT_WORKSPACE_ROOT`、
-`MIYAGO_DOTFILE_ROOT` 仍可在執行時覆蓋已安裝設定。
+`--config-dir PATH` 與 `--runtime-config-dir PATH`；環境變數
+`AGENT_FACTORY_WORKSPACE_ROOT`、`AGENT_FACTORY_DOTFILE_ROOT` 仍可在執行時覆蓋已安裝設定。
 
 若目標是既有非 symlink 檔案，會先建立帶時間戳的 backup，不會直接覆寫。
 

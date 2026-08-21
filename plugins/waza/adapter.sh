@@ -143,8 +143,8 @@ case "$mode" in
       mock) write_result "$output" pass 'mock plan validated; no provider execution performed' ;;
       waza)
         [[ -n "$context_task" ]] || { printf 'status: error\n--engine waza requires --context-task for scope binding\n' >&2; exit 2; }
-        context_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-${HOME}/.local/bin/miyago-context-harness}"
-        context_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/Project/AI/agent-workspace}"
+        context_binary="${AGENT_CONTEXT_HARNESS_BIN:-${MIYAGO_CONTEXT_HARNESS_BIN:-${HOME}/.local/bin/miyago-context-harness}}"
+        context_root="${AGENT_FACTORY_WORKSPACE_ROOT:-${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/agent-workspace}}"
         if [[ ! -x "$context_binary" ]]; then
           write_result "$output" capability_gap "Context Harness binary is unavailable: $context_binary" 'context harness binary unavailable'
           exit 1
