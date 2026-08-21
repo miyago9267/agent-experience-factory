@@ -1,0 +1,27 @@
+version: 1
+kind: agent-workflow-factory
+factory_id: agent-experience-factory
+core:
+  workspace_root: <agent-workspace-root>
+  binary: <user-home>/.local/bin/miyago-context-harness
+configuration:
+  dotfile_root: <dotfile-root>
+  source_root: <dotfile-root>/config/ai
+runtime_adapters:
+  codex:
+    source: <dotfile-root>/config/ai/codex
+    generated: <dotfile-root>/config/ai/generated/codex/AGENTS.md
+  claude:
+    source: <dotfile-root>/config/ai/claude
+    generated: <dotfile-root>/config/ai/generated/claude/AGENTS.md
+  gemini:
+    source: <dotfile-root>/config/ai/gemini
+    generated: <dotfile-root>/config/ai/generated/gemini/GEMINI.md
+  grok:
+    source: <dotfile-root>/config/ai/grok
+    generated: <dotfile-root>/config/ai/generated/grok/AGENTS.md
+excluded_paths:
+  - <non-entry-root>
+data:
+  default_root: ~/.local/share/agent-experience
+  portable_pack_kind: agent-experience-experience-pack

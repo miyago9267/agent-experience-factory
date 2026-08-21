@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+factory_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+workspace_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
+dotfile_root="${MIYAGO_DOTFILE_ROOT:-$HOME/dotfile}"
+core_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}"
+
+usage() {
+  cat <<'EOF'
+usage: agent-workflow <doctor|status|bootstrap|sync|export|import|version>
+
+Environment overrides:
+  MIYAGO_AGENT_WORKSPACE_ROOT
+  MIYAGO_DOTFILE_ROOT
+  MIYAGO_CONTEXT_HARNESS_BIN
+EOF
+}
+
+require_path() {
+  local path="$1" label="$2"
+  if [[ ! -e "$path" ]]; then
+    printf 'missing: %s (%s)\n' "$label" "$path" >&2
+    return 1
+  fi
+}
+
+doctor() {
+  require_path "$workspace_root/routing.yaml" workspace-routing
+  require_path "$workspace_root/records/tasks/index.yaml" task-registry
+  require_path "$dotfile_root/config/ai/AGENT-ENTRY.md" canonical-entry
+  require_path "$dotfile_root/config/ai/AGENTS.md" shared-rules
+  require_path "$core_binary" context-harness-binary
+  if [[ -e "$HOME/Project/AI/monika" ]]; then
+    printf 'non-entry: excluded and not inspected\n'
+  fi
+  local runtime generated
+  for runtime in codex claude gemini grok; do
+    case "$runtime" in
+      gemini) generated="$dotfile_root/config/ai/generated/gemini/GEMINI.md" ;;
+      *) generated="$dotfile_root/config/ai/generated/$runtime/AGENTS.md" ;;
+    esac
+    require_path "$generated" "$runtime-generated-entry"
+  done
+  printf '%s\n' 'status: OK'
+  printf 'factory_root: %s\nworkspace_root: %s\ndotfile_root: %s\n' \
+    "$factory_root" "$workspace_root" "$dotfile_root"
+}
+
+bootstrap() {
+  local runtime='' cwd="$PWD" task=''
+  while (($#)); do
+    case "$1" in
+      --runtime) runtime="${2:?missing value for --runtime}"; shift 2 ;;
+      --cwd) cwd="${2:?missing value for --cwd}"; shift 2 ;;
+      --task) task="${2:?missing value for --task}"; shift 2 ;;
+      *) printf 'unknown bootstrap option: %s\n' "$1" >&2; return 2 ;;
+    esac
+  done
+  [[ -n "$runtime" ]] || { printf 'bootstrap requires --runtime\n' >&2; return 2; }
+  local args=(sync --runtime "$runtime" --cwd "$cwd" --workspace-root "$workspace_root")
+  [[ -n "$task" ]] && args+=(--task "$task")
+  exec "$core_binary" "${args[@]}"
+}
+
+case "${1:-}" in
+  install) shift; exec "$factory_root/install.sh" "$@" ;;
+  doctor) shift; (($# == 0)) || { usage >&2; exit 2; }; doctor ;;
+  status) shift; exec "$core_binary" status --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
+  bootstrap|sync) shift; bootstrap "$@" ;;
+  export) shift; exec "$core_binary" export --workspace-root "$workspace_root" "$@" ;;
+  import) shift; exec "$core_binary" import --workspace-root "$workspace_root" "$@" ;;
+  version) printf '%s\n' 'agent-workflow-factory 0.1.0' ;;
+  *) usage >&2; exit 2 ;;
+esac
