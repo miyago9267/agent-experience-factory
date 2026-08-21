@@ -91,6 +91,10 @@ Waza 是 benchmark runner 插件，不是所有 runtime 的共通執行器。它
 統一結果。Waza 目前實際執行器是 `mock` 或 `copilot-sdk`，因此 Claude、Codex、
 Gemini、Grok 仍要透過各自 adapter 或外部 session 接入，不能宣稱原生 parity。
 
+OpenCode 已登記為同一份 runtime adapter contract，但目前只提供 plan、health 與
+`capability_gap` 結果；它的 daily、harness、studio 設定已存在於 dotfile，CLI
+尚未安裝且 invocation contract 尚未固定，因此不被當成 parity pass。
+
 ## 安全與範圍
 
 - 預設不安裝 Waza、不下載模型、不碰 production。

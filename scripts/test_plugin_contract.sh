@@ -2,10 +2,11 @@
 set -Eeuo pipefail
 
 factory_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+workspace_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
 entrypoint="$factory_root/scripts/agent-workflow"
 result_path="$(mktemp -t agent-workflow-plugin-result.XXXXXX.yaml)"
 
-expected_plugins=$'claude\ncodex\ngemini\ngrok\nwaza'
+expected_plugins=$'claude\ncodex\ngemini\ngrok\nopencode\nwaza'
 actual_plugins="$("$entrypoint" plugin list)"
 if [[ "$actual_plugins" != "$expected_plugins" ]]; then
   printf 'unexpected plugin list:\n%s\n' "$actual_plugins" >&2
@@ -25,6 +26,18 @@ for runtime in claude codex gemini grok; do
   grep -q '^status: error$' "$runtime_result"
   grep -q 'prompt file is required' "$runtime_result"
 done
+
+opencode_plan="$($entrypoint plugin plan --id opencode)"
+printf '%s\n' "$opencode_plan" | grep -Fq 'plugin_id: opencode'
+opencode_result="$(mktemp -t agent-workflow-opencode-result.XXXXXX.yaml)"
+trap 'rm -f "$result_path" "$opencode_result"' EXIT
+if "$entrypoint" plugin run --id opencode --context-task agent-benchmark-waza \
+  --context-cwd "$workspace_root" --prompt-file "$factory_root/fixtures/runtime-adapter-smoke/prompt.txt" \
+  --output "$opencode_result" >/dev/null 2>&1; then
+  printf '%s\n' 'OpenCode capability gap unexpectedly passed' >&2
+  exit 1
+fi
+grep -q '^status: capability_gap$' "$opencode_result"
 plan="$($entrypoint plugin plan --id waza)"
 [[ "$plan" == *'trials_per_task: 2'* ]]
 "$entrypoint" plugin run --id waza --engine mock --output "$result_path" >/dev/null

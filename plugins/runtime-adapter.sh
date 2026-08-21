@@ -133,6 +133,11 @@ run_provider() {
       grok "${args[@]}" >"$raw" 2>&1
       jq -r '.response // .result // .content // .' "$raw" >"$final" 2>/dev/null || cp "$raw" "$final"
       ;;
+    opencode)
+      failure_gap='OpenCode CLI invocation contract is not enabled in this Factory adapter'
+      failure_reason='OpenCode is registered for planning and capability reporting only'
+      return 1
+      ;;
     *)
       write_result capability_gap "unsupported runtime: $runtime" 'runtime is not registered' 2
       return 2

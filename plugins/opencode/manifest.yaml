@@ -1,0 +1,13 @@
+schema_version: "1"
+kind: agent-workflow-plugin
+plugin_id: opencode
+version: 0.1.0
+plugin_type: runtime_adapter
+runtime: opencode
+entrypoint: ../runtime-adapter.sh
+capabilities:
+  - context_bootstrap
+  - waza_compatible_result
+  - capability_gap_reporting
+healthcheck:
+  command: ["--health"]
