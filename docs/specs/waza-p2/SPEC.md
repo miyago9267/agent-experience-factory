@@ -64,6 +64,9 @@ Canonical examples：
   證明被排除專案的 dirty baseline 沒有變化；該專案不得被讀取，因此不採用這項旁證。
   第一輪提出的 Bash 3.2 fail-closed finding 已修正，但新的 Sol adjudication 因
   verifier thread limit 尚未執行。
+- Phase 4 execution policy 的 Sol 初次 gate 為 `REVISE`；findings 與 dispositions
+  記錄在 `records/verification/phase4-execution-policy-security-review.md`，修正後
+  已由 Sol security-reviewer 判定 `SECURITY_READY`，0 個 P0/P1/P2 findings。
 
 # 邊界
 
