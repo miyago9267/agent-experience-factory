@@ -137,16 +137,16 @@ case "$mode" in
     case "$engine" in
       mock) write_result "$output" pass 'mock plan validated; no provider execution performed' ;;
       waza)
+        [[ -n "$context_task" ]] || { printf 'status: error\n--engine waza requires --context-task for scope binding\n' >&2; exit 2; }
+        context_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-${HOME}/.local/bin/miyago-context-harness}"
+        context_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/Project/AI/agent-workspace}"
+        "$context_binary" plan --workspace-root "$context_root" --task "$context_task" --cwd "$context_cwd" >/dev/null
         waza_bin="$(waza_binary)"
         if [[ -z "$waza_bin" ]]; then
           write_result "$output" capability_gap 'waza executable is not installed; no benchmark execution performed'
           exit 1
         fi
         [[ -n "$output" ]] || { printf 'status: error\n--engine waza requires --output for the raw and normalized result\n' >&2; exit 2; }
-        [[ -n "$context_task" ]] || { printf 'status: error\n--engine waza requires --context-task for scope binding\n' >&2; exit 2; }
-        context_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-${HOME}/.local/bin/miyago-context-harness}"
-        context_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/Project/AI/agent-workspace}"
-        "$context_binary" plan --workspace-root "$context_root" --task "$context_task" --cwd "$context_cwd" >/dev/null
         raw_output="${output}.waza.json"
         if ! "$waza_bin" run "$eval_file" --no-cache --output "$raw_output"; then
           write_result "$output" error "Waza execution failed; raw result: $raw_output"
