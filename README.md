@@ -1,46 +1,167 @@
 # Agent Workflow Factory
 
-把 the user 的 Agent 工作流組裝成一個可安裝、可診斷、可搬遷的入口。
+Agent Workflow Factory 是 the user 的 Harness 層：它把 Context Harness、任務狀態、經驗流水線、runtime adapter、benchmark 與安裝流程組成一個可以獨立版控、安裝、診斷與封存的專案。
 
-這個專案是 distribution layer，不取代兩個 canonical source：
+它不是某一家模型的設定檔，也不是另一份全域規則。它負責「怎麼把工作系統組起來、怎麼選資料、怎麼交給 runtime 執行、怎麼留下可驗證結果」。
 
-- `<agent-workspace-root>`：Context Harness、task、experience schema 與 global rule base。
-- `<dotfile-root>`：runtime 設定來源、generated entry、symlink/deploy setup。
+## 它和其他 repository 的關係
 
-## 使用方式
+Factory 與來源資料刻意分離，避免把設定、經驗與執行器混成一包：
+
+| 元件 | 所屬 | 責任 |
+| --- | --- | --- |
+| Agent Workflow Factory | 本 repository | 安裝入口、工作流程 facade、plugin contract、benchmark、diagnostic |
+| Context Harness workspace | 外部 source | Rust Harness、routing、task/state、experience、global context |
+| dotfile | 外部 source | Codex、Claude、Grok、OpenCode 等 runtime 的設定與 bootstrap adapter |
+| private experience data | 使用者資料目錄 | 已確認經驗、候選經驗、觀察與 consumption bundle |
+
+Factory 不複製或接管任何 runtime 設定，也不把 dotfile 內容當成自己的 canonical source。安裝時透過 source-root 設定把它們接起來；因此可以換機、換路徑或換 runtime，而不必重寫 Factory 本身。
+
+`Project/AI/monika` 永遠是明確排除的 non-entry，不是本工廠的資料來源、fallback 或測試來源。
+
+## 核心工作流
+
+```text
+使用者問題
+    ↓
+agent-workflow route / plan
+    ↓
+Context Harness 判斷 task、scope、資料來源與 RoutePlan
+    ↓
+bootstrap / resume / checkpoint / handoff
+    ↓
+runtime adapter 或 plugin 執行
+    ↓
+驗證、benchmark、experience observation
+    ↓
+candidate → human gate → confirmed experience
+```
+
+Factory 的入口是 `agent-workflow`。日常工作不需要直接操作 Context Harness 的底層參數，也不需要自己找 candidate ID。
 
 ```bash
-./install.sh --dry-run
-./install.sh
 agent-workflow doctor
+agent-workflow route --cwd "$PWD" --query '我要盤點跨專案的 routing 與 symlink'
 agent-workflow bootstrap --runtime codex --cwd "$PWD"
 agent-workflow plan --cwd "$PWD"
 agent-workflow resume --task TASK_ID --cwd "$PWD"
 agent-workflow checkpoint --task TASK_ID --summary '目前狀態' --next '下一步'
 agent-workflow handoff --task TASK_ID --reason '換 session 或需要交接'
 agent-workflow runtime doctor
-agent-workflow runtime sync --runtime codex
 agent-workflow runtime sync --all
-agent-workflow experience sync --runtime codex --task TASK_ID --cwd "$PWD"
+```
+
+經驗流水線也由同一個入口提供：
+
+```bash
+agent-workflow experience observe ...
+agent-workflow experience organize ...
+agent-workflow experience review ...
+agent-workflow experience decide ...
+agent-workflow experience consume ...
+agent-workflow experience export --output ./experience-pack
+agent-workflow experience import --input ./experience-pack --map OLD=NEW
+```
+
+低風險的 observation、整理與 bundle 產生可以自動化；要把候選經驗寫成正式 Personal Model 或 shared rule，仍保留 human gate。
+
+## Benchmark 與 Waza
+
+Benchmark 在這裡不是單純測模型分數，而是用固定情境確認整條工作鏈是否仍然可靠：
+
+- Agent 是否讀到正確的 context。
+- task scope 是否被遵守，是否碰到排除範圍。
+- runtime adapter 是否能回報成功、失敗或 capability gap。
+- 輸出是否符合統一的 plugin result 與 verification record。
+- 經驗是否能被取用，而不是只被寫進資料夾後長灰塵。
+
+Factory 使用 Waza-compatible 的資料結構：
+
+| 概念 | 在工廠中的用途 |
+| --- | --- |
+| eval | 一組固定的評估目標、情境與通過條件 |
+| task | 一個明確的工作案例與 scope |
+| trial | 同一 task 的一次實際執行 |
+| grader | 對輸出做固定判定的規則或檢查器 |
+| result | 統一格式的成功、失敗、能力缺口與 evidence |
+
+目前 benchmark 分兩種：
+
+1. `mock`：不需要安裝 Waza，用來驗證 eval 設定、scope binding、plugin contract 與結果格式。
+2. `waza`：使用實際 Waza runner 執行 benchmark；若本機沒有 Waza 或 provider 不可用，必須回報 `capability_gap`，不能假裝通過。
+
+常用指令：
+
+```bash
 agent-workflow plugin list
 agent-workflow plugin doctor
 agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml
+agent-workflow plugin health --id waza
 ```
 
-安裝器建立使用者層級的 `~/.local/bin/agent-workflow` 入口與 source-root 設定檔，
-不使用 sudo，
-不會覆寫 canonical source，也不會讀取 `<non-entry-root>`。
+Waza 是可替換的 benchmark runner，不是 Factory 的核心依賴。官方 runner 的安裝方式見 [Microsoft Waza 官方文件](https://github.com/microsoft/waza/blob/main/docs/GUIDE.md)。
 
-Waza 是實際 benchmark runner，不只是結果格式。`mock` 不需要安裝 Waza；要執行
-真實 Waza runner 時，依 [Waza 官方安裝說明](https://github.com/microsoft/waza/blob/main/docs/GUIDE.md)
-安裝 `waza`，再執行 `agent-workflow plugin health --id waza` 確認版本與能力。
+固定情境 fixture 與歷史結果位於 `fixtures/`、`results/`；plugin schema 位於 `contracts/`，Waza 接法位於 `plugins/waza/`。結果不會自動升級成 Personal Model，也不會因 benchmark 通過就改寫正式規則。
 
-## P1 範圍
+## Plugin contract
 
-- 統一 core binary、workspace source 與 dotfile runtime source 的發現方式。
-- 提供 `doctor`、`bootstrap`、`resume`、`checkpoint`、`handoff`、`experience`、`status` 與版本資訊。
-- 提供 `route`，依自然語言問題選擇 session、experience、project wiki 與 raw source，並輸出可審核的 retrieval evidence。
-- 保留 portable experience pack 的 manifest 與 import/export contract。
-- 將 runtime adapter 與 benchmark adapter 留在可替換的邊界。
-- 所有插件遵循共用 manifest 與 `plugin_result` 格式；Waza 是第一個
-  `benchmark_runner`，目前可先用 mock 驗證規格。
+每個 plugin 都有 manifest，並回報統一的 `plugin_result`。目前包含：
+
+- Codex、Claude、Gemini、Grok、OpenCode runtime adapter
+- Waza benchmark runner
+
+Factory 只負責發現、health check、scope/context 驗證與結果轉發；runtime 的實際設定仍由 dotfile 管理，benchmark runner 的細節仍由 plugin 管理。規格見 [`docs/PLUGIN-CONTRACT.md`](docs/PLUGIN-CONTRACT.md)。
+
+## 安裝與搬遷
+
+Factory installer 只建立使用者層級入口，不使用 sudo，也不偷偷修改 shell startup 或遠端服務：
+
+```bash
+./install.sh --dry-run \
+  --workspace-root /path/to/agent-workspace \
+  --dotfile-root /path/to/dotfile
+
+./install.sh \
+  --workspace-root /path/to/agent-workspace \
+  --dotfile-root /path/to/dotfile
+```
+
+安裝結果包含：
+
+- `~/.local/bin/agent-workflow`
+- `~/.config/agent-experience/factory.env`
+- Context Harness binary 的 build/install link（缺少時才建立）
+
+`factory.env` 只保存 source roots；執行時仍可用 `MIYAGO_AGENT_WORKSPACE_ROOT`、`MIYAGO_DOTFILE_ROOT`、`MIYAGO_CONTEXT_HARNESS_BIN` 覆蓋。這使 Factory 本身不依賴 the user 的固定目錄。
+
+安裝後先執行：
+
+```bash
+agent-workflow doctor
+agent-workflow runtime sync --all
+```
+
+`doctor` 會檢查 source registry、RoutePlan、Context Harness、generated runtime entry、OpenCode stable link 與 non-entry boundary；缺少來源時停止，不建立第二份 fallback 設定。
+
+## 測試
+
+```bash
+bash scripts/test_factory.sh
+bash scripts/test_factory_workflow.sh
+bash scripts/test_plugin_contract.sh
+bash scripts/run_cross_project_smoke.sh
+```
+
+測試重點不是只看 shell 指令能否執行，而是確認：
+
+- 乾淨 HOME 可以安裝並建立設定入口。
+- Factory facade 能呼叫 Context Harness。
+- experience observe → organize/review/decide/consume 的資料鏈可運作。
+- plugin manifest、health 與結果 schema 一致。
+- benchmark 不會越過 task scope，也不會讀取 non-entry。
+
+## 版本與責任邊界
+
+`v0.1.0` 是第一個可安裝的 Factory package：核心入口、source registry、runtime bootstrap、experience facade、plugin contract 與 Waza-compatible benchmark 已封存。
+
+以下是後續觀察或擴充，不是安裝必要條件：provider parity 的長期結果、VSCode 使用負擔、向量搜尋、常駐服務、MCP search backend 與自動學習模型。
