@@ -7,7 +7,7 @@ runtime: gemini
 entrypoint: ../runtime-adapter.sh
 capabilities:
   - context_bootstrap
-  - external_session_result
-  - waza_compatible_result
+  - result_contract
+  - capability_gap_reporting
 healthcheck:
   command: ["--health"]

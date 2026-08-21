@@ -54,7 +54,7 @@ Canonical examples：
   真實執行能力與輸出限制。
 - [x] 將第一個真實 runtime session 的結果轉成 verification record。
 - [x] 建立 capability gap 與 deterministic grader 的正式 fixture。
-- [ ] 連接 Context Harness 的 task scope 與 Waza task，禁止 benchmark 自行擴張 scope。
+- [x] 連接 Context Harness 的 task scope 與 Waza task，禁止 benchmark 自行擴張 scope。
 
 ## Verification status
 
@@ -72,6 +72,12 @@ Canonical examples：
 - Mock 與 real benchmark 第二輪皆為 3/3 task、6/6 trial 通過，aggregate score
   `1.00`。第一輪 real run 暴露出共用 grader 把 `scope` 套用到所有情境的假陰性，
   已改成各 task 自己的 deterministic `output_contains` 條件並重跑通過。
+- Factory 的 `waza --suite real` 現在必須帶 `--context-task`，先以 Context Harness
+  `plan` 驗證 task、profile、scope 與 human gate，再允許 Waza 執行；normalized result
+  會保留每個 task/trial/grader 與 scope binding evidence。
+- Claude、Codex、Gemini、Grok 的 CLI 雖然已存在，但目前 adapter 仍是 capability-gap
+  stub；manifest 已校正為 `result_contract` 與 `capability_gap_reporting`，不再宣稱
+  真實 external session 或 Waza result 已接通。
 
 # 邊界
 
