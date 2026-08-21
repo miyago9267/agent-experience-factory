@@ -6,3 +6,5 @@ results/runtime-parity/*.raw
 results/runtime-parity/*.log
 results/cross-project/*.raw
 results/cross-project/*.log
+results/cross-project-maintenance/*.raw
+results/cross-project-maintenance/*.log

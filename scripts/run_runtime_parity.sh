@@ -53,6 +53,9 @@ for runtime in "${runtime_list[@]}"; do
         --cwd "$context_cwd" \
         --context-task "$context_task" \
         --context-cwd "$context_cwd" \
+        --scope <factory-root> \
+        --scope <agent-workspace-root> \
+        --scope <dotfile-root> \
         "${expect_args[@]}" \
         --output "$result" >"$log" 2>&1
       rc=$?

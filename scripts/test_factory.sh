@@ -25,7 +25,7 @@ plan_output=$(MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
   MIYAGO_DOTFILE_ROOT="$dotfile_root" \
   MIYAGO_CONTEXT_HARNESS_BIN="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}" \
   "$factory_bin" plan --cwd "$workspace_root")
-printf '%s\n' "$plan_output" | grep -Fq 'model: review-reasoning'
-printf '%s\n' "$plan_output" | grep -Fq 'delegation: bounded-readonly'
+printf '%s\n' "$plan_output" | grep -Fq 'model: coding-reasoning'
+printf '%s\n' "$plan_output" | grep -Fq 'delegation: bounded-parallel'
 
 printf '%s\n' 'factory: OK'

@@ -23,8 +23,9 @@ healthcheck:
 ```
 
 必要欄位是 `schema_version`、`kind`、`plugin_id`、`version`、`plugin_type`、
-`entrypoint`、`capabilities` 與 `healthcheck.command`。Factory 只接受安全的
-相對路徑，不接受把插件指到 non-entry path。
+`entrypoint`、`capabilities` 與 `healthcheck.command`。Factory 只接受解析後仍在
+Factory root 內的相對路徑；允許多個 runtime 共用 parent-level adapter，但不接受
+把插件指到 Factory 外或 non-entry path。
 
 目前允許的 `plugin_type`：
 
@@ -63,6 +64,7 @@ scenario: operations
 attempt: 1
 exit_status: 0
 duration_ms: 0
+scope: []
 output_ref: null
 tool_summary: []
 grader_summary: deterministic mock plan only

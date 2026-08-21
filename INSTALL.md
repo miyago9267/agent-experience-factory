@@ -46,9 +46,14 @@ bash -n install.sh
 agent-workflow doctor
 agent-workflow status
 agent-workflow bootstrap --runtime codex --cwd "$PWD"
+agent-workflow resume --cwd "$PWD"
+agent-workflow handoff --reason '交接給下一個 session'
+agent-workflow experience sync --runtime codex --cwd "$PWD"
 ```
 
-預期 `doctor` 回報 `status: OK`，`bootstrap` 回報 `experience_bundle_path`。
+預期 `doctor` 回報 `status: OK`，`resume` 輸出 Context Pack，`experience sync` 輸出
+scope-filtered experience bundle。找不到唯一安全 task 時，入口會停下來要求明確指定
+`--task`，不會自行猜測專案。
 
 ## 移除
 

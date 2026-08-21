@@ -18,7 +18,7 @@ core_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harne
 
 usage() {
   cat <<'EOF'
-usage: agent-workflow <doctor|status|plan|bootstrap|sync|export|import|plugin|version>
+usage: agent-workflow <doctor|status|plan|bootstrap|sync|resume|checkpoint|handoff|experience|export|import|plugin|version>
 
 Environment overrides:
   MIYAGO_AGENT_WORKSPACE_ROOT
@@ -42,7 +42,17 @@ plugin_entrypoint() {
     printf 'invalid plugin entrypoint in %s\n' "$manifest" >&2
     return 1
   }
-  printf '%s/%s\n' "$(dirname -- "$manifest")" "$value"
+  local plugin_root entrypoint_dir resolved
+  plugin_root="$(CDPATH='' cd -- "$(dirname -- "$manifest")" && pwd -P)"
+  entrypoint_dir="$(CDPATH='' cd -- "$plugin_root/$(dirname -- "$value")" 2>/dev/null && pwd -P)" || {
+    printf 'invalid plugin entrypoint directory in %s\n' "$manifest" >&2
+    return 1
+  }
+  resolved="$entrypoint_dir/$(basename -- "$value")"
+  case "$resolved" in
+    "$factory_root"/*) printf '%s\n' "$resolved" ;;
+    *) printf 'plugin entrypoint escapes factory root: %s\n' "$manifest" >&2; return 1 ;;
+  esac
 }
 
 plugin() {
@@ -123,12 +133,36 @@ bootstrap() {
   exec "$core_binary" "${args[@]}"
 }
 
+experience() {
+  local action="${1:-}"
+  shift || true
+  case "$action" in
+    observe|organize|review|decide|consume|feedback)
+      exec "$core_binary" "$action" --workspace-root "$workspace_root" --cwd "$PWD" "$@"
+      ;;
+    sync)
+      exec "$core_binary" sync --workspace-root "$workspace_root" --cwd "$PWD" "$@"
+      ;;
+    export|import)
+      exec "$core_binary" "$action" --workspace-root "$workspace_root" "$@"
+      ;;
+    *)
+      printf '%s\n' 'usage: agent-workflow experience <observe|organize|review|decide|consume|feedback|sync|export|import> ...' >&2
+      return 2
+      ;;
+  esac
+}
+
 case "${1:-}" in
   install) shift; exec "$factory_root/install.sh" "$@" ;;
   doctor) shift; (($# == 0)) || { usage >&2; exit 2; }; doctor ;;
   status) shift; exec "$core_binary" status --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
   plan) shift; exec "$core_binary" plan --workspace-root "$workspace_root" "$@" ;;
   bootstrap|sync) shift; bootstrap "$@" ;;
+  resume) shift; exec "$core_binary" resume --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
+  checkpoint) shift; exec "$core_binary" checkpoint --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
+  handoff) shift; exec "$core_binary" handoff --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
+  experience) shift; experience "$@" ;;
   export) shift; exec "$core_binary" export --workspace-root "$workspace_root" "$@" ;;
   import) shift; exec "$core_binary" import --workspace-root "$workspace_root" "$@" ;;
   plugin) shift; plugin "$@" ;;

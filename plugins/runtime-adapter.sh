@@ -12,12 +12,25 @@ model=''
 failure_gap=''
 failure_reason=''
 expected_terms=()
+scope_paths=()
 
 usage() {
-  printf '%s\n' 'usage: adapter.sh <health|plan|run> [--prompt-file PATH] [--cwd PATH] [--context-task TASK_ID] [--context-cwd PATH] [--output PATH] [--model MODEL]'
+  printf '%s\n' 'usage: adapter.sh <health|plan|run> [--prompt-file PATH] [--cwd PATH] [--context-task TASK_ID] [--context-cwd PATH] [--scope PATH] [--output PATH] [--model MODEL]'
 }
 
 yaml_quote() { jq -Rn --arg value "$1" '$value'; }
+
+write_scope() {
+  if ((${#scope_paths[@]} == 0)); then
+    printf '%s\n' 'scope: []'
+    return
+  fi
+  printf '%s\n' 'scope:'
+  local path
+  for path in "${scope_paths[@]}"; do
+    printf '  - %s\n' "$(yaml_quote "$path")"
+  done
+}
 
 context_binary() {
   if [[ -n "${MIYAGO_CONTEXT_HARNESS_BIN:-}" ]]; then
@@ -38,6 +51,7 @@ write_result() {
     printf 'plugin_id: %s\nplugin_version: 0.1.0\nstatus: %s\n' "$runtime" "$status"
     printf '%s\n' 'task_id: provider-neutral-runtime-task' "runtime: $runtime" "model: ${model:-unknown}"
     printf '%s\n' 'scenario: external-session' 'attempt: 1' "exit_status: $exit_status" 'duration_ms: null'
+    write_scope
     printf '%s\n' 'output_ref: null' 'tool_summary: []' 'graders: []' 'tasks: []'
     printf '%s\n' 'eval:' '  name: runtime-adapter-compatibility' '  version: 0.1.0' '  executor: external' '  trials_per_task: 1'
     printf 'grader_summary: %s\nevidence:\n  - %s\n' "$(yaml_quote "$summary")" "$(yaml_quote "$context_task")"
@@ -68,8 +82,8 @@ validate_provider_output() {
   [[ -s "$final_output" ]] || { failure_reason='provider returned empty output'; return 1; }
   case "$runtime" in
     claude)
-      if rg -q '^Error:|Error:' "$raw_output"; then
-        failure_gap='claude returned a CLI input or authentication error'
+      if rg -q '^Error:|Error:|session limit|api_error_status":429|rate limit|Rate limit' "$raw_output"; then
+        failure_gap='claude provider session limit, rate limit, authentication, or CLI input error'
         return 1
       fi
       ;;
@@ -80,13 +94,15 @@ validate_provider_output() {
       fi
       ;;
   esac
-  local term
-  for term in "${expected_terms[@]}"; do
-    if ! rg -F -q -- "$term" "$final_output"; then
-      failure_reason="deterministic grader missing expected term: $term"
-      return 1
-    fi
-  done
+  if ((${#expected_terms[@]})); then
+    local term
+    for term in "${expected_terms[@]}"; do
+      if ! rg -F -q -- "$term" "$final_output"; then
+        failure_reason="deterministic grader missing expected term: $term"
+        return 1
+      fi
+    done
+  fi
 }
 
 run_provider() {
@@ -135,6 +151,7 @@ while (($#)); do
     --output) output="${2:?missing value for --output}"; shift 2 ;;
     --model) model="${2:?missing value for --model}"; shift 2 ;;
     --expect) expected_terms+=("${2:?missing value for --expect}"); shift 2 ;;
+    --scope) scope_paths+=("${2:?missing value for --scope}"); shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
@@ -165,6 +182,7 @@ case "$mode" in
         printf 'plugin_id: %s\nplugin_version: 0.1.0\nstatus: pass\n' "$runtime"
         printf '%s\n' 'task_id: provider-neutral-runtime-task' "runtime: $runtime" "model: ${model:-unknown}"
         printf '%s\n' 'scenario: external-session' 'attempt: 1' 'exit_status: 0' "duration_ms: $((duration * 1000))"
+        write_scope
         printf 'output_ref: %s\n' "$(yaml_quote "$final_output")"
         printf '%s\n' 'tool_summary: []'
         if ((${#expected_terms[@]})); then

@@ -15,9 +15,10 @@
 agent-workflow doctor
 agent-workflow bootstrap --runtime codex --cwd "$PWD"
 agent-workflow plan --cwd "$PWD"
-agent-workflow plugin list
-agent-workflow plugin doctor
-agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml
+agent-workflow resume --task TASK_ID --cwd "$PWD"
+agent-workflow checkpoint --task TASK_ID --summary '目前狀態' --next '下一步'
+agent-workflow handoff --task TASK_ID --reason '換 session 或需要交接'
+agent-workflow experience sync --runtime codex --task TASK_ID --cwd "$PWD"
 agent-workflow plugin list
 agent-workflow plugin doctor
 agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml
@@ -29,7 +30,7 @@ agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml
 ## P1 範圍
 
 - 統一 core binary、workspace source 與 dotfile runtime source 的發現方式。
-- 提供 `doctor`、`bootstrap`、`status` 與版本資訊。
+- 提供 `doctor`、`bootstrap`、`resume`、`checkpoint`、`handoff`、`experience`、`status` 與版本資訊。
 - 保留 portable experience pack 的 manifest 與 import/export contract。
 - 將 runtime adapter 與 benchmark adapter 留在可替換的邊界。
 - 所有插件遵循共用 manifest 與 `plugin_result` 格式；Waza 是第一個

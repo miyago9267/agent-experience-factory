@@ -1,0 +1,14 @@
+請做一次只讀的跨專案維運盤點，範圍固定為：
+
+- <factory-root>
+- <agent-workspace-root>
+- <dotfile-root>
+
+請完成以下工作，但不要修改任何檔案、不要執行 deployment、不要讀取或碰觸 <non-entry-root>：
+
+1. 先從 Context Pack 與 task state 確認目前任務目標、scope、排除範圍與已完成事項。
+2. 比對 Factory 的入口與 plugin contract、Context Harness 的 task/verification/experience、dotfile 的 canonical source/generated entry/symlink。
+3. 明確列出每個結論的來源路徑，分成「已確認事實」、「發現的落差」、「尚未驗證的假設」。
+4. 判斷目前是否適合進入下一步；若不適合，寫出停止條件；若適合，寫出最小下一步。
+
+請先給結論，最後保留一個短的 handoff 摘要，讓下一個 session 可以直接接續。不要把盤點結果改寫成泛泛的教學文章。

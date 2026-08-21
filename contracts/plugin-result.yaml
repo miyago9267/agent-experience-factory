@@ -24,6 +24,7 @@ tasks:
     attempts: <positive-integer>
 exit_status: <integer-or-null>
 duration_ms: <integer-or-null>
+scope: []
 output_ref: <local-artifact-or-null>
 tool_summary: []
 evidence: []
