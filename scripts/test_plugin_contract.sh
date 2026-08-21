@@ -31,7 +31,7 @@ opencode_plan="$($entrypoint plugin plan --id opencode)"
 printf '%s\n' "$opencode_plan" | grep -Fq 'plugin_id: opencode'
 opencode_result="$(mktemp -t agent-workflow-opencode-result.XXXXXX.yaml)"
 trap 'rm -f "$result_path" "$opencode_result"' EXIT
-if "$entrypoint" plugin run --id opencode --context-task agent-benchmark-waza \
+if PATH="$HOME/.opencode/bin:$PATH" "$entrypoint" plugin run --id opencode --context-task agent-benchmark-waza \
   --context-cwd "$workspace_root" --prompt-file "$factory_root/fixtures/runtime-adapter-smoke/prompt.txt" \
   --output "$opencode_result" >/dev/null 2>&1; then
   printf '%s\n' 'OpenCode capability gap unexpectedly passed' >&2

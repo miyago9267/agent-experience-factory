@@ -7,6 +7,7 @@ runtime: opencode
 entrypoint: ../runtime-adapter.sh
 capabilities:
   - context_bootstrap
+  - external_session_result
   - waza_compatible_result
   - capability_gap_reporting
 healthcheck:

@@ -94,6 +94,12 @@ validate_provider_output() {
         return 1
       fi
       ;;
+    opencode)
+      if rg -q 'ProviderAuthError|API key is missing|Authentication' "$raw_output"; then
+        failure_gap='OpenCode provider authentication or API credential is unavailable'
+        return 1
+      fi
+      ;;
   esac
   if ((${#expected_terms[@]})); then
     local term
@@ -134,9 +140,11 @@ run_provider() {
       jq -r '.response // .result // .content // .' "$raw" >"$final" 2>/dev/null || cp "$raw" "$final"
       ;;
     opencode)
-      failure_gap='OpenCode CLI invocation contract is not enabled in this Factory adapter'
-      failure_reason='OpenCode is registered for planning and capability reporting only'
-      return 1
+      local args=(run --format json --pure --dir "$cwd" --agent quick-explorer)
+      [[ -n "$model" ]] && args+=(--model "$model")
+      (cd "$cwd" && opencode "${args[@]}" "$prompt") >"$raw" 2>&1
+      jq -r 'select(.type == "text" or .type == "assistant") | (.part.text // .text // .message // empty)' \
+        "$raw" >"$final" 2>/dev/null || cp "$raw" "$final"
       ;;
     *)
       write_result capability_gap "unsupported runtime: $runtime" 'runtime is not registered' 2
