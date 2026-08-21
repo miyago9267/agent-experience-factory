@@ -1,0 +1,13 @@
+schema_version: "1"
+kind: agent-workflow-plugin
+plugin_id: claude
+version: 0.1.0
+plugin_type: runtime_adapter
+runtime: claude
+entrypoint: ../runtime-adapter.sh
+capabilities:
+  - context_bootstrap
+  - external_session_result
+  - waza_compatible_result
+healthcheck:
+  command: ["--health"]
