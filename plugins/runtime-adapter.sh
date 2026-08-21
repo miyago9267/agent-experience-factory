@@ -123,26 +123,6 @@ run_provider() {
   esac
 }
 
-validate_provider_output() {
-  failure_gap=''
-  [[ -s "$final_output" ]] || return 1
-  case "$runtime" in
-    claude)
-      if rg -q '^Error:|Error:' "$raw_output"; then
-        failure_gap='claude returned a CLI input or authentication error'
-        return 1
-      fi
-      ;;
-    gemini)
-      if rg -q 'IneligibleTierError|Error authenticating|critical error' "$raw_output"; then
-        failure_gap='gemini CLI authentication or account tier is unavailable'
-        return 1
-      fi
-      ;;
-  esac
-  return 0
-}
-
 while (($#)); do
   case "$1" in
     --health) mode=health; shift ;;

@@ -4,3 +4,5 @@ dist/
 *.tmp
 results/runtime-parity/*.raw
 results/runtime-parity/*.log
+results/cross-project/*.raw
+results/cross-project/*.log

@@ -1,0 +1,11 @@
+這是一個只讀的跨專案維運盤點。請只檢查以下三個 scope：
+- <factory-root>
+- <agent-workspace-root>
+- <dotfile-root>
+
+請回答：
+1. Factory、Context Harness workspace、dotfile 各自負責什麼？
+2. 設定來源、generated target、runtime 實際生效位置如何區分？
+3. 目前能確認的 symlink/deployment 事實有哪些？
+
+要求：只讀、不修改檔案、不執行 production 操作；明確排除 <non-entry-root>；不要用名稱相似或目前 cwd 猜測來源。

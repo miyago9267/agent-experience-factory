@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-factory_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+script_source="${BASH_SOURCE[0]}"
+while [[ -L "$script_source" ]]; do
+  link_dir="$(CDPATH='' cd -- "$(dirname -- "$script_source")" && pwd -P)"
+  link_target="$(readlink -- "$script_source")"
+  if [[ "$link_target" = /* ]]; then
+    script_source="$link_target"
+  else
+    script_source="$link_dir/$link_target"
+  fi
+done
+factory_root="$(CDPATH='' cd -- "$(dirname -- "$script_source")/.." && pwd -P)"
 workspace_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
 dotfile_root="${MIYAGO_DOTFILE_ROOT:-$HOME/dotfile}"
 core_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}"
