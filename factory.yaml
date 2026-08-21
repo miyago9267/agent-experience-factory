@@ -24,7 +24,11 @@ plugins:
   waza:
     manifest: plugins/waza/manifest.yaml
     type: benchmark_runner
-    status: mock_ready
+    status: mock_ready; real_when_installed
+    version: 0.38.7
+    install: https://github.com/microsoft/waza/blob/main/docs/GUIDE.md
+    checksum: official_installer
+    optional_for: mock_benchmark
 excluded_paths:
   - <non-entry-root>
 data:

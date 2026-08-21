@@ -36,9 +36,24 @@ done
   printf 'source roots must be absolute\n' >&2; exit 2;
 }
 
-for path in "$workspace_root/routing.yaml" "$dotfile_root/config/ai/AGENTS.md"; do
+context_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}"
+required_sources=(
+  "$workspace_root/routing.yaml"
+  "$workspace_root/src/main.rs"
+  "$dotfile_root/config/ai/AGENTS.md"
+  "$dotfile_root/config/ai/generated/claude/AGENTS.md"
+  "$dotfile_root/config/ai/generated/codex/AGENTS.md"
+  "$dotfile_root/config/ai/generated/gemini/GEMINI.md"
+  "$dotfile_root/config/ai/generated/grok/AGENTS.md"
+)
+
+for path in "${required_sources[@]}"; do
   [[ -e "$path" ]] || { printf 'missing source: %s\n' "$path" >&2; exit 1; }
 done
+[[ -x "$context_binary" ]] || {
+  printf 'missing executable Context Harness: %s\n' "$context_binary" >&2
+  exit 1
+}
 
 target="$install_dir/agent-workflow"
 printf 'factory_ref: %s\n' "$ref"

@@ -67,7 +67,8 @@ write_result() {
 
 validate_context() {
   [[ -n "$context_task" ]] || { write_result capability_gap 'runtime execution requires --context-task' 'context task was not supplied' 2; exit 2; }
-  local binary="$(context_binary)"
+  local binary
+  binary="$(context_binary)"
   [[ -x "$binary" ]] || { write_result capability_gap "Context Harness binary is unavailable: $binary" 'context harness binary unavailable' 1; exit 1; }
   local root="${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/Project/AI/agent-workspace}"
   "$binary" plan --workspace-root "$root" --task "$context_task" --cwd "$context_cwd" >/dev/null || {

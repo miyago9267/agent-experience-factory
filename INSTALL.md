@@ -9,7 +9,9 @@
 - generated runtime entry 是否存在。
 - `<non-entry-root>` 是否被排除。
 
-預設不修改 shell startup，不使用 sudo，不安裝 Waza，不寫入 credential。
+預設不修改 shell startup，不使用 sudo，不自動安裝 Waza，不寫入 credential。
+Waza 是 real benchmark 的可選外部執行器；未安裝時仍可使用 mock benchmark，
+但 `plugin health --id waza` 會明確顯示 real runner 的能力缺口。
 
 ## 執行前檢查
 
@@ -49,6 +51,7 @@ agent-workflow bootstrap --runtime codex --cwd "$PWD"
 agent-workflow resume --cwd "$PWD"
 agent-workflow handoff --reason '交接給下一個 session'
 agent-workflow experience sync --runtime codex --cwd "$PWD"
+agent-workflow plugin health --id waza
 ```
 
 預期 `doctor` 回報 `status: OK`，`resume` 輸出 Context Pack，`experience sync` 輸出

@@ -45,10 +45,9 @@ write_result() {
 
 write_waza_result() {
   local output="$1" raw_output="$2" eval_path="$3" context_task="$4"
-  local succeeded total score status
+  local succeeded total status
   succeeded="$(jq -r '.summary.succeeded' "$raw_output")"
   total="$(jq -r '.summary.total_tests' "$raw_output")"
-  score="$(jq -r '.summary.aggregate_score' "$raw_output")"
   status=pass
   [[ "$succeeded" == "$total" ]] || status=fail
   jq -r --arg raw "$raw_output" --arg eval_path "$eval_path" --arg status "$status" --arg context_task "$context_task" '
