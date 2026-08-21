@@ -50,11 +50,20 @@ Canonical examples：
 - [x] 建立 Waza-compatible plugin result 與 verification contract。
 - [x] 將 Waza mock adapter 輸出補齊 eval、grader、task 與 trial 欄位。
 - [x] 讓 Factory 能列出、檢查與執行符合 manifest 的插件。
-- [ ] 建立 runtime adapter manifest，逐一標明 Claude、Codex、Gemini、Grok 的
+- [x] 建立 runtime adapter manifest，逐一標明 Claude、Codex、Gemini、Grok 的
   真實執行能力與輸出限制。
 - [ ] 將第一個真實 runtime session 的結果轉成 verification record。
 - [ ] 建立 capability gap 與 deterministic grader 的正式 fixture。
 - [ ] 連接 Context Harness 的 task scope 與 Waza task，禁止 benchmark 自行擴張 scope。
+
+## Verification status
+
+- Local verification：Factory tests、plugin contract tests、shellcheck、Rust tests
+  均通過。
+- Sol verification：runtime manifest 第一輪為 `INCONCLUSIVE`，原因是 verifier 無法
+  證明被排除專案的 dirty baseline 沒有變化；該專案不得被讀取，因此不採用這項旁證。
+  第一輪提出的 Bash 3.2 fail-closed finding 已修正，但新的 Sol adjudication 因
+  verifier thread limit 尚未執行。
 
 # 邊界
 

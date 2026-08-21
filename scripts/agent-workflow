@@ -8,7 +8,7 @@ core_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harne
 
 usage() {
   cat <<'EOF'
-usage: agent-workflow <doctor|status|bootstrap|sync|export|import|plugin|version>
+usage: agent-workflow <doctor|status|plan|bootstrap|sync|export|import|plugin|version>
 
 Environment overrides:
   MIYAGO_AGENT_WORKSPACE_ROOT
@@ -25,6 +25,16 @@ require_path() {
   fi
 }
 
+plugin_entrypoint() {
+  local manifest="$1" value
+  value="$(awk -F': ' '$1 == "entrypoint" { print $2; exit }' "$manifest")"
+  [[ -n "$value" && "$value" != /* && "$value" != *monika* ]] || {
+    printf 'invalid plugin entrypoint in %s\n' "$manifest" >&2
+    return 1
+  }
+  printf '%s/%s\n' "$(dirname -- "$manifest")" "$value"
+}
+
 plugin() {
   local action="${1:-}" plugin_id='' plugin_root entrypoint manifest
   shift || true
@@ -39,9 +49,9 @@ plugin() {
       for manifest in "$factory_root"/plugins/*/manifest.yaml; do
         [[ -f "$manifest" ]] || continue
         plugin_root="$(dirname -- "$manifest")"
-        entrypoint="$plugin_root/adapter.sh"
+        entrypoint="$(plugin_entrypoint "$manifest")"
         [[ -x "$entrypoint" ]] || { printf 'plugin entrypoint not executable: %s\n' "$entrypoint" >&2; return 1; }
-        "$entrypoint" --health >/dev/null || return 1
+        MIYAGO_PLUGIN_ID="$(basename -- "$plugin_root")" "$entrypoint" --health >/dev/null || return 1
         printf 'plugin: OK (%s)\n' "$(basename -- "$plugin_root")"
       done
       ;;
@@ -54,11 +64,13 @@ plugin() {
       done
       [[ -n "$plugin_id" ]] || { printf 'plugin %s requires --id\n' "$action" >&2; return 2; }
       plugin_root="$factory_root/plugins/$plugin_id"
-      entrypoint="$plugin_root/adapter.sh"
+      manifest="$plugin_root/manifest.yaml"
+      require_path "$manifest" "plugin-$plugin_id-manifest"
+      entrypoint="$(plugin_entrypoint "$manifest")"
       require_path "$entrypoint" "plugin-$plugin_id-entrypoint"
       case "$action" in
-        health) exec "$entrypoint" --health "$@" ;;
-        *) exec "$entrypoint" "$action" "$@" ;;
+        health) exec env MIYAGO_PLUGIN_ID="$plugin_id" "$entrypoint" --health "$@" ;;
+        *) exec env MIYAGO_PLUGIN_ID="$plugin_id" "$entrypoint" "$action" "$@" ;;
       esac
       ;;
     *) printf 'usage: agent-workflow plugin <list|doctor|health|plan|run> ...\n' >&2; return 2 ;;
@@ -107,6 +119,7 @@ case "${1:-}" in
   install) shift; exec "$factory_root/install.sh" "$@" ;;
   doctor) shift; (($# == 0)) || { usage >&2; exit 2; }; doctor ;;
   status) shift; exec "$core_binary" status --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
+  plan) shift; exec "$core_binary" plan --workspace-root "$workspace_root" "$@" ;;
   bootstrap|sync) shift; bootstrap "$@" ;;
   export) shift; exec "$core_binary" export --workspace-root "$workspace_root" "$@" ;;
   import) shift; exec "$core_binary" import --workspace-root "$workspace_root" "$@" ;;

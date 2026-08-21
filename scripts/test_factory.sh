@@ -21,5 +21,11 @@ doctor_output=$(MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
 printf '%s\n' "$doctor_output" | grep -Fq 'status: OK'
 version_output=$("$factory_bin" version)
 printf '%s\n' "$version_output" | grep -Fq 'agent-workflow-factory 0.1.0'
+plan_output=$(MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
+  MIYAGO_DOTFILE_ROOT="$dotfile_root" \
+  MIYAGO_CONTEXT_HARNESS_BIN="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}" \
+  "$factory_bin" plan --cwd "$workspace_root")
+printf '%s\n' "$plan_output" | grep -Fq 'model: review-reasoning'
+printf '%s\n' "$plan_output" | grep -Fq 'delegation: bounded-readonly'
 
 printf '%s\n' 'factory: OK'

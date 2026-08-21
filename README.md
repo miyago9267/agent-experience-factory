@@ -14,6 +14,7 @@
 ./install.sh
 agent-workflow doctor
 agent-workflow bootstrap --runtime codex --cwd "$PWD"
+agent-workflow plan --cwd "$PWD"
 agent-workflow plugin list
 agent-workflow plugin doctor
 agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml

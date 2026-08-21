@@ -23,6 +23,7 @@ updated: 2026-08-21
 agent-workflow install
 agent-workflow doctor
 agent-workflow bootstrap --runtime <runtime> --cwd <path>
+agent-workflow plan --cwd <path>
 agent-workflow status
 agent-workflow export --output <pack>
 agent-workflow import --input <pack> --map <old>=<new>
@@ -59,4 +60,6 @@ Factory 只負責發現、健康檢查與轉發；插件仍保有自己的執行
 
 - runtime adapter contract 統一由 factory 驗證，實作仍留在各 runtime source。
 - Waza adapter 透過 provider-neutral benchmark record 接入。
+- Phase 4 execution policy 由 Context Harness `plan` 輸出，再由 Factory/runtime plugin
+  轉成 Waza-compatible eval/task/trial 設定。
 - search provider 先保留 filesystem/index seam，服務化另行評估。
