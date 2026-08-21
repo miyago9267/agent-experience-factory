@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 factory_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 workspace_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
+dotfile_root="${MIYAGO_DOTFILE_ROOT:-$HOME/dotfile}"
 tmp_root="$(mktemp -d "${TMPDIR:-/tmp}/miyago-factory-workflow.XXXXXX")"
 trap 'rm -rf "$tmp_root"' EXIT
 
@@ -15,7 +16,7 @@ MIYAGO_OBSERVATION_ROOT="$tmp_root/data" "$factory_root/scripts/agent-workflow" 
   --source user_message \
   --summary 'Factory facade should capture experience without exposing the candidate id.' >/dev/null
 
-output="$(MIYAGO_OBSERVATION_ROOT="$tmp_root/data" "$factory_root/scripts/agent-workflow" experience sync \
+output="$(cd "$dotfile_root" && MIYAGO_OBSERVATION_ROOT="$tmp_root/data" "$factory_root/scripts/agent-workflow" experience sync \
   --task personal-experience-autocapture \
   --experience-task personal-experience-autocapture \
   --runtime codex \

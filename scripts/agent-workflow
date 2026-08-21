@@ -35,6 +35,27 @@ require_path() {
   fi
 }
 
+has_option() {
+  local expected="$1"
+  shift
+  local arg
+  for arg in "$@"; do
+    [[ "$arg" == "$expected" ]] && return 0
+  done
+  return 1
+}
+
+run_core_with_cwd() {
+  local action="$1"
+  shift
+  local command=("$core_binary" "$action" --workspace-root "$workspace_root")
+  if ! has_option --cwd "$@"; then
+    command+=(--cwd "$PWD")
+  fi
+  command+=("$@")
+  exec "${command[@]}"
+}
+
 plugin_entrypoint() {
   local manifest="$1" value
   value="$(awk -F': ' '$1 == "entrypoint" { print $2; exit }' "$manifest")"
@@ -138,10 +159,10 @@ experience() {
   shift || true
   case "$action" in
     observe|organize|review|decide|consume|feedback)
-      exec "$core_binary" "$action" --workspace-root "$workspace_root" --cwd "$PWD" "$@"
+      run_core_with_cwd "$action" "$@"
       ;;
     sync)
-      exec "$core_binary" sync --workspace-root "$workspace_root" --cwd "$PWD" "$@"
+      run_core_with_cwd sync "$@"
       ;;
     export|import)
       exec "$core_binary" "$action" --workspace-root "$workspace_root" "$@"
@@ -156,12 +177,12 @@ experience() {
 case "${1:-}" in
   install) shift; exec "$factory_root/install.sh" "$@" ;;
   doctor) shift; (($# == 0)) || { usage >&2; exit 2; }; doctor ;;
-  status) shift; exec "$core_binary" status --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
+  status) shift; run_core_with_cwd status "$@" ;;
   plan) shift; exec "$core_binary" plan --workspace-root "$workspace_root" "$@" ;;
   bootstrap|sync) shift; bootstrap "$@" ;;
-  resume) shift; exec "$core_binary" resume --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
-  checkpoint) shift; exec "$core_binary" checkpoint --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
-  handoff) shift; exec "$core_binary" handoff --workspace-root "$workspace_root" --cwd "$PWD" "$@" ;;
+  resume) shift; run_core_with_cwd resume "$@" ;;
+  checkpoint) shift; run_core_with_cwd checkpoint "$@" ;;
+  handoff) shift; run_core_with_cwd handoff "$@" ;;
   experience) shift; experience "$@" ;;
   export) shift; exec "$core_binary" export --workspace-root "$workspace_root" "$@" ;;
   import) shift; exec "$core_binary" import --workspace-root "$workspace_root" "$@" ;;
