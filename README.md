@@ -18,6 +18,9 @@ agent-workflow plan --cwd "$PWD"
 agent-workflow resume --task TASK_ID --cwd "$PWD"
 agent-workflow checkpoint --task TASK_ID --summary '目前狀態' --next '下一步'
 agent-workflow handoff --task TASK_ID --reason '換 session 或需要交接'
+agent-workflow runtime doctor
+agent-workflow runtime sync --runtime codex
+agent-workflow runtime sync --all
 agent-workflow experience sync --runtime codex --task TASK_ID --cwd "$PWD"
 agent-workflow plugin list
 agent-workflow plugin doctor

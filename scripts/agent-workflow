@@ -18,7 +18,7 @@ core_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harne
 
 usage() {
   cat <<'EOF'
-usage: agent-workflow <doctor|status|plan|bootstrap|sync|resume|checkpoint|handoff|experience|export|import|plugin|version>
+usage: agent-workflow <doctor|status|plan|bootstrap|sync|resume|checkpoint|handoff|runtime|experience|export|import|plugin|version>
 
 Environment overrides:
   MIYAGO_AGENT_WORKSPACE_ROOT
@@ -138,6 +138,49 @@ doctor() {
     "$factory_root" "$workspace_root" "$dotfile_root"
 }
 
+runtime() {
+  local action="${1:-}" runtime_name=""
+  shift || true
+  case "$action" in
+    list)
+      printf '%s\n' codex claude gemini grok
+      ;;
+    doctor)
+      require_path "$dotfile_root/script/common/check_agent_rule_sync.sh" runtime-sync-check
+      bash "$dotfile_root/script/common/check_agent_rule_sync.sh"
+      ;;
+    sync)
+      local sync_all=0
+      while (($#)); do
+        case "$1" in
+          --runtime) runtime_name="${2:?missing value for --runtime}"; shift 2 ;;
+          --all) sync_all=1; shift ;;
+          *) printf 'unknown runtime sync option: %s\n' "$1" >&2; return 2 ;;
+        esac
+      done
+      if ((sync_all)); then
+        [[ -z "$runtime_name" ]] || { printf '%s\n' '--all cannot be combined with --runtime' >&2; return 2; }
+        for runtime_name in codex claude gemini grok; do
+          runtime sync --runtime "$runtime_name"
+        done
+        return 0
+      fi
+      [[ -n "$runtime_name" ]] || { printf '%s\n' 'runtime sync requires --runtime RUNTIME or --all' >&2; return 2; }
+      case "$runtime_name" in
+        codex|claude|gemini|grok) ;;
+        *) printf 'unsupported runtime: %s\n' "$runtime_name" >&2; return 2 ;;
+      esac
+      local setup_script="$dotfile_root/script/common/setup_${runtime_name}.sh"
+      require_path "$setup_script" "$runtime_name-setup-script"
+      bash "$setup_script"
+      ;;
+    *)
+      printf '%s\n' 'usage: agent-workflow runtime <list|doctor|sync> [--runtime RUNTIME|--all]' >&2
+      return 2
+      ;;
+  esac
+}
+
 bootstrap() {
   local runtime='' cwd="$PWD" task=''
   while (($#)); do
@@ -183,6 +226,7 @@ case "${1:-}" in
   resume) shift; run_core_with_cwd resume "$@" ;;
   checkpoint) shift; run_core_with_cwd checkpoint "$@" ;;
   handoff) shift; run_core_with_cwd handoff "$@" ;;
+  runtime) shift; runtime "$@" ;;
   experience) shift; experience "$@" ;;
   export) shift; exec "$core_binary" export --workspace-root "$workspace_root" "$@" ;;
   import) shift; exec "$core_binary" import --workspace-root "$workspace_root" "$@" ;;

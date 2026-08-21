@@ -51,6 +51,8 @@ Factory 只負責發現、健康檢查與轉發；插件仍保有自己的執行
 - `doctor` 能辨識缺少的 source、binary、generated entry、runtime target 與
   non-entry boundary。
 - `bootstrap` 能呼叫 core sync，回傳可供 runtime 讀取的 bundle 路徑。
+- Factory 有統一的 runtime `list`、`doctor`、`sync` facade，實際 runtime 變更仍由
+  dotfile canonical setup script 負責。
 - confirmed experience 可匯出成不含 raw transcript 的 portable pack，並能在
   明確 path mapping 後匯入。
 - installer、doctor、bootstrap、pack import/export 都有 targeted verification。

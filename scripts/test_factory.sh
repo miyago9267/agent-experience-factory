@@ -30,6 +30,9 @@ doctor_output=$(MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
 printf '%s\n' "$doctor_output" | grep -Fq 'status: OK'
 version_output=$("$factory_bin" version)
 printf '%s\n' "$version_output" | grep -Fq 'agent-workflow-factory 0.1.0'
+runtime_list=$("$factory_bin" runtime list)
+printf '%s\n' "$runtime_list" | grep -Fxq codex
+printf '%s\n' "$runtime_list" | grep -Fxq grok
 plan_output=$(MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
   MIYAGO_DOTFILE_ROOT="$dotfile_root" \
   HOME="$tmp_home" \
