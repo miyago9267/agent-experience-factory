@@ -2,14 +2,17 @@
 
 ## 範圍
 
-本 installer 只安裝使用者層級入口 `~/.local/bin/agent-workflow`，並驗證：
+本 installer 會建立使用者層級入口 `~/.local/bin/agent-workflow`，並在缺少
+Context Harness binary 時，從指定的 canonical workspace 自動 build/install。
+它也會驗證：
 
-- `agent-workspace` 是否存在且包含 Rust harness。
+- `agent-workspace` 是否存在且包含 Rust harness；缺少 binary 時自動建置。
 - `dotfile/config/ai` 是否為 canonical source。
 - generated runtime entry 是否存在。
 - `<non-entry-root>` 是否被排除。
 
 預設不修改 shell startup，不使用 sudo，不自動安裝 Waza，不寫入 credential。
+若透過 `MIYAGO_CONTEXT_HARNESS_BIN` 明確指定 binary，installer 不會覆蓋該路徑；缺少時會直接失敗。
 Waza 是 real benchmark 的可選外部執行器；未安裝時仍可使用 mock benchmark，
 但 `plugin health --id waza` 會明確顯示 real runner 的能力缺口。
 

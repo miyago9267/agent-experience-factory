@@ -46,7 +46,8 @@ Factory 只負責發現、健康檢查與轉發；插件仍保有自己的執行
 
 # P1 完成條件
 
-- 一個 installer 能在 dry-run 中顯示所有來源、目標與將要改變的檔案。
+- 一個 installer 能在 dry-run 中顯示所有來源、目標與將要改變的檔案，並能在缺少
+  Context Harness binary 時從 canonical workspace 自動 build/install。
 - `doctor` 能辨識缺少的 source、binary、generated entry、runtime target 與
   non-entry boundary。
 - `bootstrap` 能呼叫 core sync，回傳可供 runtime 讀取的 bundle 路徑。

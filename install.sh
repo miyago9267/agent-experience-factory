@@ -37,6 +37,8 @@ done
 }
 
 context_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}"
+context_binary_explicit=0
+[[ -n "${MIYAGO_CONTEXT_HARNESS_BIN:-}" ]] && context_binary_explicit=1
 required_sources=(
   "$workspace_root/routing.yaml"
   "$workspace_root/src/main.rs"
@@ -50,10 +52,29 @@ required_sources=(
 for path in "${required_sources[@]}"; do
   [[ -e "$path" ]] || { printf 'missing source: %s\n' "$path" >&2; exit 1; }
 done
-[[ -x "$context_binary" ]] || {
-  printf 'missing executable Context Harness: %s\n' "$context_binary" >&2
-  exit 1
-}
+
+if [[ ! -x "$context_binary" ]]; then
+  if ((context_binary_explicit)); then
+    printf 'missing executable Context Harness: %s\n' "$context_binary" >&2
+    exit 1
+  fi
+  if ((dry_run)); then
+    printf 'context_harness: build_required (%s)\n' "$context_binary"
+  else
+    command -v cargo >/dev/null 2>&1 || {
+      printf 'cargo is required to build Context Harness\n' >&2
+      exit 1
+    }
+    cargo build --release --manifest-path "$workspace_root/Cargo.toml"
+    mkdir -p "$(dirname -- "$context_binary")"
+    if [[ -e "$context_binary" || -L "$context_binary" ]]; then
+      printf 'refusing to replace non-executable Context Harness: %s\n' "$context_binary" >&2
+      exit 1
+    fi
+    ln -s "$workspace_root/target/release/miyago-context-harness" "$context_binary"
+    printf 'context_harness: installed (%s)\n' "$context_binary"
+  fi
+fi
 
 target="$install_dir/agent-workflow"
 printf 'factory_ref: %s\n' "$ref"
