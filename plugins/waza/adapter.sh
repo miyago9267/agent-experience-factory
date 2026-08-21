@@ -3,10 +3,20 @@ set -Eeuo pipefail
 
 plugin_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 manifest="$plugin_root/manifest.yaml"
-eval_file="$plugin_root/evals/personal-model-parity/eval.yaml"
+eval_file="$plugin_root/evals/personal-model/eval.yaml"
 
 usage() {
-  printf '%s\n' 'usage: adapter.sh <health|plan|run> [--output PATH] [--engine mock|waza]'
+  printf '%s\n' 'usage: adapter.sh <health|plan|run> [--output PATH] [--engine mock|waza] [--suite mock|real]'
+}
+
+waza_binary() {
+  local found
+  found="$(command -v waza || true)"
+  if [[ -n "$found" ]]; then
+    printf '%s\n' "$found"
+  elif [[ -x "${HOME}/bin/waza" ]]; then
+    printf '%s\n' "${HOME}/bin/waza"
+  fi
 }
 
 write_result() {
@@ -30,6 +40,7 @@ write_result() {
 mode=health
 output=''
 engine=mock
+suite=mock
 while (($#)); do
   case "$1" in
     --health) mode=health; shift ;;
@@ -37,31 +48,49 @@ while (($#)); do
     run) mode=run; shift ;;
     --output) output="${2:?missing value for --output}"; shift 2 ;;
     --engine) engine="${2:?missing value for --engine}"; shift 2 ;;
+    --suite) suite="${2:?missing value for --suite}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+case "$suite" in
+  mock) eval_file="$plugin_root/evals/personal-model/eval.yaml" ;;
+  real) eval_file="$plugin_root/evals/personal-model/eval-real.yaml" ;;
+  *) printf 'unsupported suite: %s\n' "$suite" >&2; exit 2 ;;
+esac
 
 [[ -f "$manifest" && -f "$eval_file" ]] || { printf 'status: error\nmissing plugin files\n' >&2; exit 2; }
 
 case "$mode" in
   health)
     printf 'plugin_id: waza\nplugin_type: benchmark_runner\nmanifest: OK\neval: OK\n'
-    command -v waza >/dev/null 2>&1 && printf 'waza_binary: available\n' || printf 'waza_binary: not-installed\n'
+    [[ -n "$(waza_binary)" ]] && printf 'waza_binary: available\n' || printf 'waza_binary: not-installed\n'
     ;;
   plan)
-    printf 'plugin_id: waza\nengine: %s\neval: %s\nscenarios: architecture,operations,chitchat\ntrials_per_task: 2\n' "$engine" "$eval_file"
+    printf 'plugin_id: waza\nengine: %s\nsuite: %s\neval: %s\nscenarios: architecture,operations,chitchat\ntrials_per_task: 2\n' "$engine" "$suite" "$eval_file"
     ;;
   run)
     case "$engine" in
       mock) write_result "$output" pass 'mock plan validated; no provider execution performed' ;;
       waza)
-        if ! command -v waza >/dev/null 2>&1; then
+        waza_bin="$(waza_binary)"
+        if [[ -z "$waza_bin" ]]; then
           write_result "$output" capability_gap 'waza executable is not installed; no benchmark execution performed'
           exit 1
         fi
-        write_result "$output" inconclusive 'Waza is present but provider configuration is not supplied'
-        exit 1
+        [[ -n "$output" ]] || { printf 'status: error\n--engine waza requires --output for the raw and normalized result\n' >&2; exit 2; }
+        raw_output="${output}.waza.json"
+        if ! "$waza_bin" run "$eval_file" --no-cache --output "$raw_output"; then
+          write_result "$output" error "Waza execution failed; raw result: $raw_output"
+          exit 1
+        fi
+        summary="$(jq -r '[.summary.succeeded, .summary.total_tests, .summary.aggregate_score] | @tsv' "$raw_output")"
+        read -r succeeded total score <<< "$summary"
+        status=pass
+        [[ "$succeeded" == "$total" ]] || status=fail
+        write_result "$output" "$status" "Waza executed $total task(s), succeeded $succeeded, aggregate score $score; raw result: $raw_output"
+        exit 0
         ;;
       *) printf 'unsupported engine: %s\n' "$engine" >&2; exit 2 ;;
     esac

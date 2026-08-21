@@ -1,0 +1,17 @@
+name: personal-model-behavior-parity
+description: Provider-neutral fixed scenarios for Personal Model behavior checks
+skill: personal-model
+schemaVersion: "1.2"
+version: "0.1.0"
+config:
+  executor: mock
+  model: mock
+  trials_per_task: 2
+  timeout_seconds: 120
+  parallel: false
+metrics:
+  - name: behavior_consistency
+    weight: 1.0
+    threshold: 1.0
+tasks:
+  - "tasks/*.yaml"

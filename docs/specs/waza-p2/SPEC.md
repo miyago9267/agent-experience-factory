@@ -52,8 +52,8 @@ Canonical examples：
 - [x] 讓 Factory 能列出、檢查與執行符合 manifest 的插件。
 - [x] 建立 runtime adapter manifest，逐一標明 Claude、Codex、Gemini、Grok 的
   真實執行能力與輸出限制。
-- [ ] 將第一個真實 runtime session 的結果轉成 verification record。
-- [ ] 建立 capability gap 與 deterministic grader 的正式 fixture。
+- [x] 將第一個真實 runtime session 的結果轉成 verification record。
+- [x] 建立 capability gap 與 deterministic grader 的正式 fixture。
 - [ ] 連接 Context Harness 的 task scope 與 Waza task，禁止 benchmark 自行擴張 scope。
 
 ## Verification status
@@ -67,10 +67,15 @@ Canonical examples：
 - Phase 4 execution policy 的 Sol 初次 gate 為 `REVISE`；findings 與 dispositions
   記錄在 `records/verification/phase4-execution-policy-security-review.md`，修正後
   已由 Sol security-reviewer 判定 `SECURITY_READY`，0 個 P0/P1/P2 findings。
+- Waza `0.38.7` 已依官方 installer 安裝並通過 checksum；官方 `waza check` 顯示
+  eval schema 有效。Waza mock 與 real `copilot-sdk` 各執行三個情境、每情境兩次。
+- Mock 與 real benchmark 第二輪皆為 3/3 task、6/6 trial 通過，aggregate score
+  `1.00`。第一輪 real run 暴露出共用 grader 把 `scope` 套用到所有情境的假陰性，
+  已改成各 task 自己的 deterministic `output_contains` 條件並重跑通過。
 
 # 邊界
 
-- 不自動安裝 Waza，不下載模型，不碰 production。
+- Waza 安裝與 benchmark 只限本機；不下載模型，不碰 production。
 - 不讀寫 `<non-entry-root>`。
 - 不把 benchmark pass 自動升級成 Personal Model 或 confirmed experience。
 - 不在 P2 引入向量搜尋、常駐服務或跨 provider 的隱式 session 操作。

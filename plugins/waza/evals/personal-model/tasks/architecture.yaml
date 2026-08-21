@@ -1,0 +1,11 @@
+id: architecture
+name: Architecture concept translation
+description: 判斷新名詞背後的既有工程概念，並區分新增能力與包裝名詞。
+inputs:
+  prompt: "請判斷新名詞背後的既有工程概念，並說明新增能力、成本、風險與可行方案。"
+expected:
+  output_contains:
+    - "既有"
+    - "成本"
+    - "風險"
+    - "方案"

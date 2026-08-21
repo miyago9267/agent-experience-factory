@@ -1,0 +1,17 @@
+name: personal-model-behavior-parity-real
+description: Provider-neutral fixed scenarios using Waza's real Copilot SDK executor
+skill: personal-model
+schemaVersion: "1.2"
+version: "0.1.0"
+config:
+  executor: copilot-sdk
+  model: auto
+  trials_per_task: 2
+  timeout_seconds: 120
+  parallel: false
+metrics:
+  - name: behavior_consistency
+    weight: 1.0
+    threshold: 0.8
+tasks:
+  - "tasks/*.yaml"
