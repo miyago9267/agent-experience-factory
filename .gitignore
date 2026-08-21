@@ -8,3 +8,5 @@ results/cross-project/*.raw
 results/cross-project/*.log
 results/cross-project-maintenance/*.raw
 results/cross-project-maintenance/*.log
+results/
+plugins/waza/results/

@@ -101,7 +101,7 @@ agent-workflow plugin health --id waza
 
 Waza 是可替換的 benchmark runner，不是 Factory 的核心依賴。官方 runner 的安裝方式見 [Microsoft Waza 官方文件](https://github.com/microsoft/waza/blob/main/docs/GUIDE.md)。
 
-固定情境 fixture 與歷史結果位於 `fixtures/`、`results/`；plugin schema 位於 `contracts/`，Waza 接法位於 `plugins/waza/`。結果不會自動升級成 Personal Model，也不會因 benchmark 通過就改寫正式規則。
+固定情境 fixture 位於 `fixtures/`；plugin schema 位於 `contracts/`，Waza 接法位於 `plugins/waza/`。Benchmark output 會在本機生成到 `results/` 與 `plugins/waza/results/`，這些目錄刻意不進 public repository，避免 provider 輸出、本機路徑或環境資訊被公開。結果不會自動升級成 Personal Model，也不會因 benchmark 通過就改寫正式規則。
 
 ## Plugin contract
 
