@@ -26,6 +26,9 @@ agent-workflow bootstrap --runtime <runtime> --cwd <path>
 agent-workflow status
 agent-workflow export --output <pack>
 agent-workflow import --input <pack> --map <old>=<new>
+agent-workflow plugin list
+agent-workflow plugin doctor
+agent-workflow plugin run --id waza --engine mock --output <result>
 ```
 
 # Source ownership
@@ -37,6 +40,9 @@ agent-workflow import --input <pack> --map <old>=<new>
 | Private experience | `~/.local/share/agent-experience` | 匯出、匯入、權限與 scope 檢查 |
 | Benchmark | Waza 或替代 runner | 只提供標準化結果，不寫回規則 |
 
+插件的 manifest、生命週期與結果格式見 [`PLUGIN-CONTRACT.md`](PLUGIN-CONTRACT.md)。
+Factory 只負責發現、健康檢查與轉發；插件仍保有自己的執行細節。
+
 # P1 完成條件
 
 - 一個 installer 能在 dry-run 中顯示所有來源、目標與將要改變的檔案。
@@ -46,6 +52,8 @@ agent-workflow import --input <pack> --map <old>=<new>
 - confirmed experience 可匯出成不含 raw transcript 的 portable pack，並能在
   明確 path mapping 後匯入。
 - installer、doctor、bootstrap、pack import/export 都有 targeted verification。
+- Waza 以 `benchmark_runner` 插件接入，能在未安裝 Waza 時用 mock 方式驗證 eval
+  配置與標準結果格式；缺少真正引擎時回報 `capability_gap`。
 
 # 後續接點
 

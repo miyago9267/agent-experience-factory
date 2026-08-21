@@ -8,7 +8,7 @@ core_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harne
 
 usage() {
   cat <<'EOF'
-usage: agent-workflow <doctor|status|bootstrap|sync|export|import|version>
+usage: agent-workflow <doctor|status|bootstrap|sync|export|import|plugin|version>
 
 Environment overrides:
   MIYAGO_AGENT_WORKSPACE_ROOT
@@ -23,6 +23,46 @@ require_path() {
     printf 'missing: %s (%s)\n' "$label" "$path" >&2
     return 1
   fi
+}
+
+plugin() {
+  local action="${1:-}" plugin_id='' plugin_root entrypoint manifest
+  shift || true
+  case "$action" in
+    list)
+      for manifest in "$factory_root"/plugins/*/manifest.yaml; do
+        [[ -f "$manifest" ]] || continue
+        basename -- "$(dirname -- "$manifest")"
+      done | sort
+      ;;
+    doctor)
+      for manifest in "$factory_root"/plugins/*/manifest.yaml; do
+        [[ -f "$manifest" ]] || continue
+        plugin_root="$(dirname -- "$manifest")"
+        entrypoint="$plugin_root/adapter.sh"
+        [[ -x "$entrypoint" ]] || { printf 'plugin entrypoint not executable: %s\n' "$entrypoint" >&2; return 1; }
+        "$entrypoint" --health >/dev/null || return 1
+        printf 'plugin: OK (%s)\n' "$(basename -- "$plugin_root")"
+      done
+      ;;
+    run|plan|health)
+      while (($#)); do
+        case "$1" in
+          --id) plugin_id="${2:?missing value for --id}"; shift 2 ;;
+          *) break ;;
+        esac
+      done
+      [[ -n "$plugin_id" ]] || { printf 'plugin %s requires --id\n' "$action" >&2; return 2; }
+      plugin_root="$factory_root/plugins/$plugin_id"
+      entrypoint="$plugin_root/adapter.sh"
+      require_path "$entrypoint" "plugin-$plugin_id-entrypoint"
+      case "$action" in
+        health) exec "$entrypoint" --health "$@" ;;
+        *) exec "$entrypoint" "$action" "$@" ;;
+      esac
+      ;;
+    *) printf 'usage: agent-workflow plugin <list|doctor|health|plan|run> ...\n' >&2; return 2 ;;
+  esac
 }
 
 doctor() {
@@ -70,6 +110,7 @@ case "${1:-}" in
   bootstrap|sync) shift; bootstrap "$@" ;;
   export) shift; exec "$core_binary" export --workspace-root "$workspace_root" "$@" ;;
   import) shift; exec "$core_binary" import --workspace-root "$workspace_root" "$@" ;;
+  plugin) shift; plugin "$@" ;;
   version) printf '%s\n' 'agent-workflow-factory 0.1.0' ;;
   *) usage >&2; exit 2 ;;
 esac

@@ -14,6 +14,12 @@
 ./install.sh
 agent-workflow doctor
 agent-workflow bootstrap --runtime codex --cwd "$PWD"
+agent-workflow plugin list
+agent-workflow plugin doctor
+agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml
+agent-workflow plugin list
+agent-workflow plugin doctor
+agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml
 ```
 
 安裝器只建立使用者層級的 `~/.local/bin/agent-workflow` 入口，不使用 sudo，
@@ -25,3 +31,7 @@ agent-workflow bootstrap --runtime codex --cwd "$PWD"
 - 提供 `doctor`、`bootstrap`、`status` 與版本資訊。
 - 保留 portable experience pack 的 manifest 與 import/export contract。
 - 將 runtime adapter 與 benchmark adapter 留在可替換的邊界。
+- 所有插件遵循共用 manifest 與 `plugin_result` 格式；Waza 是第一個
+  `benchmark_runner`，目前可先用 mock 驗證規格。
+- 所有插件遵循共用 manifest 與 `plugin_result` 格式；Waza 是第一個
+  `benchmark_runner`，目前可先用 mock 驗證規格。

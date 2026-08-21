@@ -1,0 +1,13 @@
+schema_version: "1"
+kind: agent-workflow-plugin
+plugin_id: waza
+version: 0.1.0
+plugin_type: benchmark_runner
+entrypoint: adapter.sh
+capabilities:
+  - deterministic_grading
+  - benchmark_result_normalization
+  - waza_eval_plan
+healthcheck:
+  command:
+    - --health

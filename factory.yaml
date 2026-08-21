@@ -20,6 +20,11 @@ runtime_adapters:
   grok:
     source: <dotfile-root>/config/ai/grok
     generated: <dotfile-root>/config/ai/generated/grok/AGENTS.md
+plugins:
+  waza:
+    manifest: plugins/waza/manifest.yaml
+    type: benchmark_runner
+    status: mock_ready
 excluded_paths:
   - <non-entry-root>
 data:

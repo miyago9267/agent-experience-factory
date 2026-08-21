@@ -1,0 +1,22 @@
+name: personal-model-behavior-parity
+description: Provider-neutral fixed scenarios for Personal Model behavior checks
+skill: personal-model
+schemaVersion: "1.2"
+version: "0.1.0"
+config:
+  executor: mock
+  trials_per_task: 2
+  timeout_seconds: 120
+  parallel: false
+graders:
+  - name: required-structure
+    type: text
+    config:
+      required: ["scope", "boundary", "verification"]
+tasks:
+  - id: architecture
+    prompt: "請判斷新名詞背後的既有工程概念，並說明新增能力、成本、風險與可行方案。"
+  - id: operations
+    prompt: "請針對 production API timeout 提出調查順序、事實清單與停止條件，不要直接修改 production。"
+  - id: chitchat
+    prompt: "自然聊聊 Agent 像在辦公室裡養了一群很認真的實習生，不要整理成待辦。"
