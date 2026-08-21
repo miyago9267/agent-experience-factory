@@ -83,9 +83,7 @@ doctor() {
   require_path "$dotfile_root/config/ai/AGENT-ENTRY.md" canonical-entry
   require_path "$dotfile_root/config/ai/AGENTS.md" shared-rules
   require_path "$core_binary" context-harness-binary
-  if [[ -e "$HOME/Project/AI/monika" ]]; then
-    printf 'non-entry: excluded and not inspected\n'
-  fi
+  printf 'non-entry: configured exclusion (not inspected)\n'
   local runtime generated
   for runtime in codex claude gemini grok; do
     case "$runtime" in
