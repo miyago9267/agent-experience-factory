@@ -41,7 +41,13 @@ bash -n install.sh
 
 ```text
 ~/.local/bin/agent-workflow
+~/.config/agent-experience/factory.env
 ```
+
+`factory.env` 只保存 workspace 與 dotfile 的 source root，讓安裝時指定的路徑在
+之後不依賴當前 shell 環境仍能生效。若要指定配置目錄，可使用
+`--config-dir PATH`；環境變數 `MIYAGO_AGENT_WORKSPACE_ROOT`、
+`MIYAGO_DOTFILE_ROOT` 仍可在執行時覆蓋已安裝設定。
 
 若目標是既有非 symlink 檔案，會先建立帶時間戳的 backup，不會直接覆寫。
 

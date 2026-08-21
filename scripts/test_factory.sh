@@ -21,22 +21,22 @@ HOME="$tmp_home" RUSTUP_HOME="$rustup_home" CARGO_HOME="$cargo_home" \
   "$factory_root/install.sh" --workspace-root "$workspace_root" \
   --dotfile-root "$dotfile_root" --install-dir "$install_dir" >/dev/null
 [[ -x "$tmp_home/.local/bin/miyago-context-harness" ]]
+[[ -f "$tmp_home/.config/agent-experience/factory.env" ]]
+HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_home/.config" \
+  MIYAGO_DOTFILE_ROOT="$dotfile_root" MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
+  bash "$dotfile_root/script/common/setup_dotfiles.sh" >/dev/null
+[[ -L "$tmp_home/.config/agent-experience/AGENTS.md" ]]
+[[ -L "$tmp_home/.config/agent-experience/personal-model/PROFILE.md" ]]
 
 factory_bin="$install_dir/agent-workflow"
-doctor_output=$(MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
-  MIYAGO_DOTFILE_ROOT="$dotfile_root" \
-  HOME="$tmp_home" \
-  "$factory_bin" doctor)
+doctor_output=$(HOME="$tmp_home" "$factory_bin" doctor)
 printf '%s\n' "$doctor_output" | grep -Fq 'status: OK'
 version_output=$("$factory_bin" version)
 printf '%s\n' "$version_output" | grep -Fq 'agent-workflow-factory 0.1.0'
 runtime_list=$("$factory_bin" runtime list)
 printf '%s\n' "$runtime_list" | grep -Fxq codex
 printf '%s\n' "$runtime_list" | grep -Fxq grok
-plan_output=$(MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root" \
-  MIYAGO_DOTFILE_ROOT="$dotfile_root" \
-  HOME="$tmp_home" \
-  "$factory_bin" plan --cwd "$workspace_root")
+plan_output=$(HOME="$tmp_home" "$factory_bin" plan --cwd "$workspace_root")
 printf '%s\n' "$plan_output" | grep -Fq 'model: coding-reasoning'
 printf '%s\n' "$plan_output" | grep -Fq 'delegation: bounded-parallel'
 

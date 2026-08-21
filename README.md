@@ -27,7 +27,8 @@ agent-workflow plugin doctor
 agent-workflow plugin run --id waza --engine mock --output /tmp/waza-result.yaml
 ```
 
-安裝器只建立使用者層級的 `~/.local/bin/agent-workflow` 入口，不使用 sudo，
+安裝器建立使用者層級的 `~/.local/bin/agent-workflow` 入口與 source-root 設定檔，
+不使用 sudo，
 不會覆寫 canonical source，也不會讀取 `<non-entry-root>`。
 
 Waza 是實際 benchmark runner，不只是結果格式。`mock` 不需要安裝 Waza；要執行
