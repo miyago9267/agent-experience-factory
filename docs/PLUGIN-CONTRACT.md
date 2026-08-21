@@ -48,7 +48,7 @@ plugin --id <id> run [options]
 
 ## 統一結果
 
-可執行的插件輸出一份 YAML，至少包含：
+可執行的插件輸出一份 YAML；完整欄位見 `contracts/plugin-result.yaml`，至少包含：
 
 ```yaml
 schema_version: "1"
@@ -66,7 +66,15 @@ duration_ms: 0
 output_ref: null
 tool_summary: []
 grader_summary: deterministic mock plan only
+graders: []
+tasks: []
+eval:
+  name: personal-model-behavior-parity
+  version: 0.1.0
+  executor: mock
+  trials_per_task: 2
 evidence: []
+capability_gaps: []
 errors: []
 ```
 

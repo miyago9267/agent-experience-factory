@@ -1,0 +1,31 @@
+schema_version: "1"
+kind: plugin_result
+plugin_id: <plugin-id>
+plugin_version: <semver>
+status: pass|fail|capability_gap|inconclusive|error
+task_id: <task-id>
+runtime: <runtime-or-provider-neutral>
+model: <model-or-unknown>
+scenario: <scenario-id>
+attempt: <positive-integer>
+eval:
+  name: <eval-name>
+  version: <eval-version>
+  executor: mock|copilot-sdk|external
+  trials_per_task: <positive-integer>
+graders:
+  - name: <grader-name>
+    passed: true|false
+    score: <0-to-1>
+    feedback: <short-summary>
+tasks:
+  - id: <task-id>
+    passed: true|false
+    attempts: <positive-integer>
+exit_status: <integer-or-null>
+duration_ms: <integer-or-null>
+output_ref: <local-artifact-or-null>
+tool_summary: []
+evidence: []
+capability_gaps: []
+errors: []

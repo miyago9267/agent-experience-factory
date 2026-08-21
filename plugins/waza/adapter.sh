@@ -20,7 +20,9 @@ write_result() {
     printf '%s\n' 'scenario: architecture,operations,chitchat' 'attempt: 2' 'exit_status: 0' 'duration_ms: 0'
     printf '%s\n' 'output_ref: null' 'tool_summary: []'
     printf 'grader_summary: "%s"\n' "$summary"
-    printf 'evidence:\n  - %s\nerrors: []\n' "$eval_file"
+    printf '%s\n' 'graders: []' 'tasks: []'
+    printf '%s\n' 'eval:' '  name: personal-model-behavior-parity' '  version: 0.1.0' "  executor: $engine" '  trials_per_task: 2'
+    printf 'evidence:\n  - %s\ncapability_gaps: []\nerrors: []\n' "$eval_file"
   } > "$output"
   printf 'result_path: %s\nstatus: %s\n' "$output" "$status"
 }

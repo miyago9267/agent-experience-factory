@@ -1,0 +1,17 @@
+schema_version: "1"
+kind: verification_record
+record_id: <unique-id>
+task_id: <task-id>
+scope: []
+target: <goal>
+method:
+  plugin_id: <plugin-id>
+  eval_name: <eval-name>
+  scenario: <scenario-id>
+  attempt: <positive-integer>
+expected: <pass-condition>
+observed: <short-summary>
+status: pass|fail|capability_gap|inconclusive|error
+evidence: []
+capability_gaps: []
+next_actions: []

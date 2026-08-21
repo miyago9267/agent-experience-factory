@@ -12,6 +12,8 @@ plan="$($entrypoint plugin plan --id waza)"
 "$entrypoint" plugin run --id waza --engine mock --output "$result_path" >/dev/null
 grep -q '^kind: plugin_result$' "$result_path"
 grep -q '^status: pass$' "$result_path"
+grep -q '^eval:$' "$result_path"
+grep -q '^  trials_per_task: 2$' "$result_path"
 grep -q 'no provider execution performed' "$result_path"
 
 if "$entrypoint" plugin run --id waza --engine unsupported >/dev/null 2>&1; then
