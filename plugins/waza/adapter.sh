@@ -20,7 +20,7 @@ waza_binary() {
 }
 
 write_result() {
-  local output="$1" status="$2" summary="$3"
+  local output="$1" status="$2" summary="$3" gap="${4:-}"
   [[ -n "$output" ]] || { printf 'status: %s\n' "$status"; return; }
   mkdir -p "$(dirname -- "$output")"
   {
@@ -32,7 +32,13 @@ write_result() {
     printf 'grader_summary: "%s"\n' "$summary"
     printf '%s\n' 'graders: []' 'tasks: []'
     printf '%s\n' 'eval:' '  name: personal-model-behavior-parity' '  version: 0.1.0' "  executor: $engine" '  trials_per_task: 2'
-    printf 'evidence:\n  - %s\ncapability_gaps: []\nerrors: []\n' "$eval_file"
+    printf 'evidence:\n  - %s\n' "$eval_file"
+    if [[ -n "$gap" ]]; then
+      printf 'capability_gaps:\n  - "%s"\n' "$gap"
+    else
+      printf '%s\n' 'capability_gaps: []'
+    fi
+    printf '%s\n' 'errors: []'
   } > "$output"
   printf 'result_path: %s\nstatus: %s\n' "$output" "$status"
 }
@@ -140,10 +146,14 @@ case "$mode" in
         [[ -n "$context_task" ]] || { printf 'status: error\n--engine waza requires --context-task for scope binding\n' >&2; exit 2; }
         context_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-${HOME}/.local/bin/miyago-context-harness}"
         context_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/Project/AI/agent-workspace}"
+        if [[ ! -x "$context_binary" ]]; then
+          write_result "$output" capability_gap "Context Harness binary is unavailable: $context_binary" 'context harness binary unavailable'
+          exit 1
+        fi
         "$context_binary" plan --workspace-root "$context_root" --task "$context_task" --cwd "$context_cwd" >/dev/null
         waza_bin="$(waza_binary)"
         if [[ -z "$waza_bin" ]]; then
-          write_result "$output" capability_gap 'waza executable is not installed; no benchmark execution performed'
+          write_result "$output" capability_gap 'waza executable is not installed; no benchmark execution performed' 'waza executable is not installed'
           exit 1
         fi
         [[ -n "$output" ]] || { printf 'status: error\n--engine waza requires --output for the raw and normalized result\n' >&2; exit 2; }
