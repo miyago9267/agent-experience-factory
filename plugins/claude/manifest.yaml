@@ -7,7 +7,8 @@ runtime: claude
 entrypoint: ../runtime-adapter.sh
 capabilities:
   - context_bootstrap
-  - result_contract
+  - external_session_result
+  - waza_compatible_result
   - capability_gap_reporting
 healthcheck:
   command: ["--health"]

@@ -21,8 +21,9 @@ for runtime in claude codex gemini grok; do
   "$entrypoint" plugin run --id "$runtime" --output "$runtime_result" >/dev/null 2>&1
   runtime_exit=$?
   set -e
-  [[ "$runtime_exit" -eq 1 ]] || exit 1
-  grep -q '^status: capability_gap$' "$runtime_result"
+  [[ "$runtime_exit" -eq 2 ]] || exit 1
+  grep -q '^status: error$' "$runtime_result"
+  grep -q 'prompt file is required' "$runtime_result"
 done
 plan="$($entrypoint plugin plan --id waza)"
 [[ "$plan" == *'trials_per_task: 2'* ]]

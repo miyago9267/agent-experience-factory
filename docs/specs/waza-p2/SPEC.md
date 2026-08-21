@@ -75,9 +75,9 @@ Canonical examples：
 - Factory 的 `waza --suite real` 現在必須帶 `--context-task`，先以 Context Harness
   `plan` 驗證 task、profile、scope 與 human gate，再允許 Waza 執行；normalized result
   會保留每個 task/trial/grader 與 scope binding evidence。
-- Claude、Codex、Gemini、Grok 的 CLI 雖然已存在，但目前 adapter 仍是 capability-gap
-  stub；manifest 已校正為 `result_contract` 與 `capability_gap_reporting`，不再宣稱
-  真實 external session 或 Waza result 已接通。
+- Claude、Codex、Gemini、Grok 的共用 headless adapter 已接通，能保存 external
+  session result 與 deterministic grader；provider 登入或帳號層級不足時仍明確回報
+  `capability_gap`，不把 CLI exit 0 當成成功。
 
 # 邊界
 

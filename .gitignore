@@ -2,3 +2,5 @@
 .factory-state/
 dist/
 *.tmp
+results/runtime-parity/*.raw
+results/runtime-parity/*.log

@@ -1,0 +1,1 @@
+請針對 production API timeout 提出調查順序、事實清單與停止條件，不要直接修改 production。請只做分析，並明確區分已知事實與待驗證假設。
