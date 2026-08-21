@@ -38,6 +38,7 @@ Waza 是實際 benchmark runner，不只是結果格式。`mock` 不需要安裝
 
 - 統一 core binary、workspace source 與 dotfile runtime source 的發現方式。
 - 提供 `doctor`、`bootstrap`、`resume`、`checkpoint`、`handoff`、`experience`、`status` 與版本資訊。
+- 提供 `route`，依自然語言問題選擇 session、experience、project wiki 與 raw source，並輸出可審核的 retrieval evidence。
 - 保留 portable experience pack 的 manifest 與 import/export contract。
 - 將 runtime adapter 與 benchmark adapter 留在可替換的邊界。
 - 所有插件遵循共用 manifest 與 `plugin_result` 格式；Waza 是第一個

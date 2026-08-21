@@ -15,10 +15,13 @@ factory_root="$(CDPATH='' cd -- "$(dirname -- "$script_source")/.." && pwd -P)"
 workspace_root="${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/Project/AI/agent-workspace}"
 dotfile_root="${MIYAGO_DOTFILE_ROOT:-$HOME/dotfile}"
 core_binary="${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}"
+export MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root"
+export MIYAGO_AGENT_FACTORY_ROOT="${MIYAGO_AGENT_FACTORY_ROOT:-$factory_root}"
+export MIYAGO_DOTFILE_ROOT="$dotfile_root"
 
 usage() {
   cat <<'EOF'
-usage: agent-workflow <doctor|status|plan|bootstrap|sync|resume|checkpoint|handoff|runtime|experience|export|import|plugin|version>
+usage: agent-workflow <doctor|status|plan|route|bootstrap|sync|resume|checkpoint|handoff|runtime|experience|export|import|plugin|version>
 
 Environment overrides:
   MIYAGO_AGENT_WORKSPACE_ROOT
@@ -124,6 +127,15 @@ doctor() {
   require_path "$dotfile_root/config/ai/AGENT-ENTRY.md" canonical-entry
   require_path "$dotfile_root/config/ai/AGENTS.md" shared-rules
   require_path "$core_binary" context-harness-binary
+  route_probe="$($core_binary route --workspace-root "$workspace_root" --cwd "$workspace_root" --query '目前 routing 的設定在哪裡' 2>/dev/null)" || {
+    printf '%s\n' 'routing-source-registry: FAILED' >&2
+    return 1
+  }
+  printf '%s\n' "$route_probe" | grep -Fq 'source_adapter:' || {
+    printf '%s\n' 'routing-source-registry: invalid RoutePlan' >&2
+    return 1
+  }
+  printf '%s\n' 'routing-source-registry: OK'
   printf 'non-entry: configured exclusion (not inspected)\n'
   local runtime generated
   for runtime in codex claude gemini grok; do
@@ -222,6 +234,7 @@ case "${1:-}" in
   doctor) shift; (($# == 0)) || { usage >&2; exit 2; }; doctor ;;
   status) shift; run_core_with_cwd status "$@" ;;
   plan) shift; exec "$core_binary" plan --workspace-root "$workspace_root" "$@" ;;
+  route) shift; run_core_with_cwd route "$@" ;;
   bootstrap|sync) shift; bootstrap "$@" ;;
   resume) shift; run_core_with_cwd resume "$@" ;;
   checkpoint) shift; run_core_with_cwd checkpoint "$@" ;;
