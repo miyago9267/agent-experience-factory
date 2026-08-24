@@ -87,6 +87,9 @@ option_value() {
 resolve_task_for_cwd() {
   local cwd="$1"
   shift
+  case "$cwd" in
+    "$non_entry_root"|"$non_entry_root"/*) return 1 ;;
+  esac
   if has_option --task "$@"; then
     option_value --task "$@"
     return 0
@@ -297,13 +300,23 @@ session_start() {
   done
   if [[ -z "$task" ]]; then
     task="$(resolve_task_for_cwd "$cwd" --cwd "$cwd")" || {
-      "$core_binary" discover --workspace-root "$workspace_root" --cwd "$cwd"
-      return 1
+      printf '%s\n' 'context-harness: no task selected; continuing without historical context' >&2
+      printf '%s\n' 'session_action: fresh'
+      return 0
     }
   fi
-  "$core_binary" resume --workspace-root "$workspace_root" --cwd "$cwd" --task "$task"
+  printf 'selected_task: %s\n' "$task"
+  if ! "$core_binary" resume --workspace-root "$workspace_root" --cwd "$cwd" --task "$task"; then
+    printf 'context-harness: resume failed for %s; continuing without historical context\n' "$task" >&2
+    printf '%s\n' 'session_action: continue_without_context'
+    return 0
+  fi
   if [[ -n "$runtime" ]]; then
-    "$core_binary" sync --workspace-root "$workspace_root" --cwd "$cwd" --task "$task" --runtime "$runtime"
+    if ! "$core_binary" sync --workspace-root "$workspace_root" --cwd "$cwd" --task "$task" --runtime "$runtime"; then
+      printf 'context-harness: experience sync failed for %s; continuing with resumed context\n' "$task" >&2
+      printf '%s\n' 'session_action: continue_without_experience_sync'
+      return 0
+    fi
   fi
 }
 
