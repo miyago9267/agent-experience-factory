@@ -24,6 +24,7 @@ core_binary="${AGENT_CONTEXT_HARNESS_BIN:-${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.l
 runtime_config_dir="${AGENT_FACTORY_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-experience}"
 data_root="${AGENT_FACTORY_DATA_ROOT:-${XDG_DATA_HOME:-$HOME/.local/share}/agent-experience}"
 non_entry_root="${AGENT_FACTORY_NON_ENTRY_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-experience/non-entry}"
+default_task_id="${AGENT_FACTORY_DEFAULT_TASK_ID:-}"
 export AGENT_FACTORY_WORKSPACE_ROOT="$workspace_root"
 export AGENT_FACTORY_ROOT="${AGENT_FACTORY_ROOT:-$factory_root}"
 export AGENT_FACTORY_DOTFILE_ROOT="$dotfile_root"
@@ -41,13 +42,14 @@ export MIYAGO_NON_ENTRY_ROOT="$non_entry_root"
 
 usage() {
   cat <<'EOF'
-usage: agent-workflow <doctor|status|plan|route|bootstrap|sync|resume|checkpoint|handoff|runtime|experience|export|import|plugin|version>
+usage: agent-workflow <doctor|status|plan|route|session-start|bootstrap|sync|resume|checkpoint|handoff|runtime|experience|export|import|plugin|version>
 
 Environment overrides:
   AGENT_FACTORY_WORKSPACE_ROOT
   AGENT_FACTORY_DOTFILE_ROOT
   AGENT_CONTEXT_HARNESS_BIN
   AGENT_FACTORY_RUNTIME_CONFIG_DIR
+  AGENT_FACTORY_DEFAULT_TASK_ID  optional local fallback task
 EOF
 }
 
@@ -69,12 +71,53 @@ has_option() {
   return 1
 }
 
+option_value() {
+  local expected="$1"
+  shift
+  while (($#)); do
+    if [[ "$1" == "$expected" ]]; then
+      printf '%s\n' "${2:-}"
+      return 0
+    fi
+    shift
+  done
+  return 1
+}
+
+resolve_task_for_cwd() {
+  local cwd="$1"
+  shift
+  if has_option --task "$@"; then
+    option_value --task "$@"
+    return 0
+  fi
+  if [[ -n "${MIYAGO_TASK_ID:-}" ]]; then
+    printf '%s\n' "$MIYAGO_TASK_ID"
+    return 0
+  fi
+  local discovered
+  if discovered="$($core_binary discover --workspace-root "$workspace_root" --cwd "$cwd" 2>/dev/null)"; then
+    printf '%s\n' "$discovered" | awk -F': ' '$1 == "task_id" { print $2; exit }'
+    return 0
+  fi
+  [[ -n "$default_task_id" ]] || return 1
+  printf '%s\n' "$default_task_id"
+}
+
 run_core_with_cwd() {
   local action="$1"
   shift
+  local cwd
+  cwd="$(option_value --cwd "$@" 2>/dev/null || true)"
+  [[ -n "$cwd" ]] || cwd="$PWD"
   local command=("$core_binary" "$action" --workspace-root "$workspace_root")
   if ! has_option --cwd "$@"; then
-    command+=(--cwd "$PWD")
+    command+=(--cwd "$cwd")
+  fi
+  if ! has_option --task "$@" && [[ -z "${MIYAGO_TASK_ID:-}" ]] && [[ -n "$default_task_id" ]]; then
+    if ! "$core_binary" discover --workspace-root "$workspace_root" --cwd "$cwd" >/dev/null 2>&1; then
+      command+=(--task "$default_task_id")
+    fi
   fi
   command+=("$@")
   exec "${command[@]}"
@@ -237,9 +280,31 @@ bootstrap() {
     esac
   done
   [[ -n "$runtime" ]] || { printf 'bootstrap requires --runtime\n' >&2; return 2; }
-  local args=(sync --runtime "$runtime" --cwd "$cwd" --workspace-root "$workspace_root")
+  local args=(--runtime "$runtime" --cwd "$cwd")
   [[ -n "$task" ]] && args+=(--task "$task")
-  exec "$core_binary" "${args[@]}"
+  session_start "${args[@]}"
+}
+
+session_start() {
+  local runtime='' cwd="$PWD" task=''
+  while (($#)); do
+    case "$1" in
+      --runtime) runtime="${2:?missing value for --runtime}"; shift 2 ;;
+      --cwd) cwd="${2:?missing value for --cwd}"; shift 2 ;;
+      --task) task="${2:?missing value for --task}"; shift 2 ;;
+      *) printf 'unknown session-start option: %s\n' "$1" >&2; return 2 ;;
+    esac
+  done
+  if [[ -z "$task" ]]; then
+    task="$(resolve_task_for_cwd "$cwd" --cwd "$cwd")" || {
+      "$core_binary" discover --workspace-root "$workspace_root" --cwd "$cwd"
+      return 1
+    }
+  fi
+  "$core_binary" resume --workspace-root "$workspace_root" --cwd "$cwd" --task "$task"
+  if [[ -n "$runtime" ]]; then
+    "$core_binary" sync --workspace-root "$workspace_root" --cwd "$cwd" --task "$task" --runtime "$runtime"
+  fi
 }
 
 experience() {
@@ -266,9 +331,11 @@ case "${1:-}" in
   install) shift; exec "$factory_root/install.sh" "$@" ;;
   doctor) shift; (($# == 0)) || { usage >&2; exit 2; }; doctor ;;
   status) shift; run_core_with_cwd status "$@" ;;
-  plan) shift; exec "$core_binary" plan --workspace-root "$workspace_root" "$@" ;;
+  plan) shift; run_core_with_cwd plan "$@" ;;
   route) shift; run_core_with_cwd route "$@" ;;
-  bootstrap|sync) shift; bootstrap "$@" ;;
+  session-start) shift; session_start "$@" ;;
+  bootstrap) shift; bootstrap "$@" ;;
+  sync) shift; bootstrap "$@" ;;
   resume) shift; run_core_with_cwd resume "$@" ;;
   checkpoint) shift; run_core_with_cwd checkpoint "$@" ;;
   handoff) shift; run_core_with_cwd handoff "$@" ;;

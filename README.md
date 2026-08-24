@@ -42,6 +42,7 @@ Factory 的入口是 `agent-workflow`。日常工作不需要直接操作 Contex
 ```bash
 agent-workflow doctor
 agent-workflow route --cwd "$PWD" --query '我要盤點跨專案的 routing 與 symlink'
+agent-workflow session-start --runtime codex --cwd "$PWD"
 agent-workflow bootstrap --runtime codex --cwd "$PWD"
 agent-workflow plan --cwd "$PWD"
 agent-workflow resume --task TASK_ID --cwd "$PWD"
@@ -140,10 +141,13 @@ Factory installer 只建立使用者層級入口，不使用 sudo，也不偷偷
 
 ```bash
 agent-workflow doctor
+agent-workflow session-start --runtime codex --cwd "$PWD"
 agent-workflow runtime sync --all
 ```
 
 `doctor` 會檢查 source registry、RoutePlan、Context Harness、generated runtime entry、OpenCode stable link 與 non-entry boundary；缺少來源時停止，不建立第二份 fallback 設定。
+
+`session-start` 是各 runtime 的共同進入點。它先依目前工作目錄尋找唯一 task；找不到時，只有本機安裝明確設定 `--default-task-id` 才會使用該 fallback。public Factory 不內建任何個人 task，避免把使用者的工作狀態寫進通用 repo。
 
 ## 測試
 

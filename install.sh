@@ -7,6 +7,7 @@ config_dir="${AGENT_FACTORY_CONFIG_DIR:-${MIYAGO_AGENT_WORKFLOW_CONFIG_DIR:-${XD
 runtime_config_dir="${AGENT_FACTORY_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-experience}"
 data_root="${AGENT_FACTORY_DATA_ROOT:-${XDG_DATA_HOME:-$HOME/.local/share}/agent-experience}"
 non_entry_root="${AGENT_FACTORY_NON_ENTRY_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-experience/non-entry}"
+default_task_id="${AGENT_FACTORY_DEFAULT_TASK_ID:-}"
 workspace_root="${AGENT_FACTORY_WORKSPACE_ROOT:-${MIYAGO_AGENT_WORKSPACE_ROOT:-}}"
 dotfile_root="${AGENT_FACTORY_DOTFILE_ROOT:-${MIYAGO_DOTFILE_ROOT:-}}"
 dry_run=0
@@ -22,6 +23,7 @@ usage: ./install.sh [--dry-run] [--ref REF]
   --runtime-config-dir PATH  stable runtime-neutral instruction directory
   --data-root PATH       private experience data directory
   --non-entry-root PATH  explicitly excluded path
+  --default-task-id ID   local fallback task when cwd has no unique match
   --ref REF              visible release/ref label (default: local)
 EOF
 }
@@ -37,6 +39,7 @@ while (($#)); do
     --runtime-config-dir) runtime_config_dir="${2:?missing value for --runtime-config-dir}"; shift 2 ;;
     --data-root) data_root="${2:?missing value for --data-root}"; shift 2 ;;
     --non-entry-root) non_entry_root="${2:?missing value for --non-entry-root}"; shift 2 ;;
+    --default-task-id) default_task_id="${2:?missing value for --default-task-id}"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
@@ -115,6 +118,7 @@ fi
   printf 'AGENT_FACTORY_RUNTIME_CONFIG_DIR=%q\n' "$runtime_config_dir"
   printf 'AGENT_FACTORY_DATA_ROOT=%q\n' "$data_root"
   printf 'AGENT_FACTORY_NON_ENTRY_ROOT=%q\n' "$non_entry_root"
+  [[ -n "$default_task_id" ]] && printf 'AGENT_FACTORY_DEFAULT_TASK_ID=%q\n' "$default_task_id"
 } > "$config_file"
 if [[ -e "$target" && ! -L "$target" ]]; then
   backup="$target.bak.$(date +%Y%m%d_%H%M%S)"

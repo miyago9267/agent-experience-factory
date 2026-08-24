@@ -19,7 +19,8 @@ dry_run_output=$(HOME="$tmp_home" RUSTUP_HOME="$rustup_home" CARGO_HOME="$cargo_
 printf '%s\n' "$dry_run_output" | grep -Fq 'context_harness: build_required'
 HOME="$tmp_home" RUSTUP_HOME="$rustup_home" CARGO_HOME="$cargo_home" \
   "$factory_root/install.sh" --workspace-root "$workspace_root" \
-  --dotfile-root "$dotfile_root" --runtime-config-dir "$tmp_home/.config/agent-experience" \
+  --dotfile-root "$dotfile_root" --runtime-config-dir "$tmp_home/.config/miyago-agent" \
+  --default-task-id agent-benchmark-waza \
   --install-dir "$install_dir" >/dev/null
 [[ -x "$tmp_home/.local/bin/miyago-context-harness" ]]
 [[ -f "$tmp_home/.config/agent-experience/factory.env" ]]
@@ -40,5 +41,7 @@ printf '%s\n' "$runtime_list" | grep -Fxq grok
 plan_output=$(HOME="$tmp_home" "$factory_bin" plan --cwd "$workspace_root")
 printf '%s\n' "$plan_output" | grep -Fq 'model: coding-reasoning'
 printf '%s\n' "$plan_output" | grep -Fq 'delegation: bounded-parallel'
+status_output=$(HOME="$tmp_home" "$factory_bin" status --cwd "$tmp_home")
+printf '%s\n' "$status_output" | grep -Fq 'task_id: agent-benchmark-waza'
 
 printf '%s\n' 'factory: OK'
