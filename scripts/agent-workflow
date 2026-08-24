@@ -315,13 +315,21 @@ session_start() {
     return 0
   fi
   if [[ -n "$runtime" ]]; then
-    local sync_args=(sync --workspace-root "$workspace_root" --cwd "$cwd" --task "$task" --runtime "$runtime")
-    [[ -n "$experience_task" ]] && sync_args+=(--experience-task "$experience_task")
-    if ! "$core_binary" "${sync_args[@]}"; then
-      printf 'context-harness: experience sync failed for %s; continuing with resumed context\n' "$task" >&2
-      printf '%s\n' 'session_action: continue_without_experience_sync'
-      return 0
+    local sync_tasks=()
+    if [[ -n "$experience_task" ]]; then
+      sync_tasks+=("$experience_task")
+    else
+      sync_tasks+=(personal-experience-autocapture)
+      [[ "$task" == personal-experience-autocapture ]] || sync_tasks+=("$task")
     fi
+    local current_experience_task sync_args
+    for current_experience_task in "${sync_tasks[@]}"; do
+      sync_args=(sync --workspace-root "$workspace_root" --cwd "$cwd" --task "$task" --runtime "$runtime" --experience-task "$current_experience_task")
+      if ! "$core_binary" "${sync_args[@]}"; then
+        printf 'context-harness: experience sync failed for %s; continuing with resumed context\n' "$current_experience_task" >&2
+        printf '%s\n' 'session_action: continue_without_experience_sync'
+      fi
+    done
   fi
 }
 
