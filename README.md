@@ -43,6 +43,7 @@ Factory 的入口是 `agent-workflow`。日常工作不需要直接操作 Contex
 agent-workflow doctor
 agent-workflow route --cwd "$PWD" --query '我要盤點跨專案的 routing 與 symlink'
 agent-workflow session-start --runtime codex --cwd "$PWD"
+agent-workflow session-start --runtime codex --cwd "$PWD" --experience-task TASK_ID
 agent-workflow bootstrap --runtime codex --cwd "$PWD"
 agent-workflow plan --cwd "$PWD"
 agent-workflow resume --task TASK_ID --cwd "$PWD"

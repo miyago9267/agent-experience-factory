@@ -273,28 +273,31 @@ runtime() {
 }
 
 bootstrap() {
-  local runtime='' cwd="$PWD" task=''
+  local runtime='' cwd="$PWD" task='' experience_task=''
   while (($#)); do
     case "$1" in
       --runtime) runtime="${2:?missing value for --runtime}"; shift 2 ;;
       --cwd) cwd="${2:?missing value for --cwd}"; shift 2 ;;
       --task) task="${2:?missing value for --task}"; shift 2 ;;
+      --experience-task) experience_task="${2:?missing value for --experience-task}"; shift 2 ;;
       *) printf 'unknown bootstrap option: %s\n' "$1" >&2; return 2 ;;
     esac
   done
   [[ -n "$runtime" ]] || { printf 'bootstrap requires --runtime\n' >&2; return 2; }
   local args=(--runtime "$runtime" --cwd "$cwd")
   [[ -n "$task" ]] && args+=(--task "$task")
+  [[ -n "$experience_task" ]] && args+=(--experience-task "$experience_task")
   session_start "${args[@]}"
 }
 
 session_start() {
-  local runtime='' cwd="$PWD" task=''
+  local runtime='' cwd="$PWD" task='' experience_task=''
   while (($#)); do
     case "$1" in
       --runtime) runtime="${2:?missing value for --runtime}"; shift 2 ;;
       --cwd) cwd="${2:?missing value for --cwd}"; shift 2 ;;
       --task) task="${2:?missing value for --task}"; shift 2 ;;
+      --experience-task) experience_task="${2:?missing value for --experience-task}"; shift 2 ;;
       *) printf 'unknown session-start option: %s\n' "$1" >&2; return 2 ;;
     esac
   done
@@ -312,7 +315,9 @@ session_start() {
     return 0
   fi
   if [[ -n "$runtime" ]]; then
-    if ! "$core_binary" sync --workspace-root "$workspace_root" --cwd "$cwd" --task "$task" --runtime "$runtime"; then
+    local sync_args=(sync --workspace-root "$workspace_root" --cwd "$cwd" --task "$task" --runtime "$runtime")
+    [[ -n "$experience_task" ]] && sync_args+=(--experience-task "$experience_task")
+    if ! "$core_binary" "${sync_args[@]}"; then
       printf 'context-harness: experience sync failed for %s; continuing with resumed context\n' "$task" >&2
       printf '%s\n' 'session_action: continue_without_experience_sync'
       return 0
