@@ -303,9 +303,19 @@ session_start() {
   done
   if [[ -z "$task" ]]; then
     task="$(resolve_task_for_cwd "$cwd" --cwd "$cwd")" || {
-      printf '%s\n' 'context-harness: no task selected; continuing without historical context' >&2
-      printf '%s\n' 'session_action: fresh'
-      return 0
+      # Context Harness creates a scoped local task when `plan` has no task.
+      # Factory used to stop at discover and made a fresh session look broken.
+      if "$core_binary" plan --workspace-root "$workspace_root" --cwd "$cwd" >/dev/null 2>&1; then
+        task="$(resolve_task_for_cwd "$cwd" --cwd "$cwd")" || true
+        if [[ -n "$task" ]]; then
+          printf '%s\n' 'task_action: created_local_scope' >&2
+        fi
+      fi
+      if [[ -z "$task" ]]; then
+        printf '%s\n' 'context-harness: no task selected; continuing without historical context' >&2
+        printf '%s\n' 'session_action: fresh'
+        return 0
+      fi
     }
   fi
   printf 'selected_task: %s\n' "$task"

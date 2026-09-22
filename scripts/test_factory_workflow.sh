@@ -34,4 +34,16 @@ grep -Fq 'Factory facade should capture experience without exposing the candidat
 AGENT_CONTEXT_HARNESS_BIN="${AGENT_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}"
 usage_output="$($AGENT_CONTEXT_HARNESS_BIN 2>&1 || true)"
 printf '%s\n' "$usage_output" | grep -Fq 'handoff'
+
+fresh_workspace="$tmp_root/fresh-workspace"
+fresh_project="$tmp_root/fresh-project"
+mkdir -p "$fresh_workspace"
+cp -R "$workspace_root/routing.yaml" "$workspace_root/records" "$fresh_workspace/"
+mkdir -p "$fresh_project"
+git -C "$fresh_project" init -q
+fresh_output="$(AGENT_FACTORY_WORKSPACE_ROOT="$fresh_workspace" \
+  AGENT_FACTORY_DOTFILE_ROOT="$dotfile_root" "$factory_root/scripts/agent-workflow" \
+  session-start --runtime codex --cwd "$fresh_project")"
+printf '%s\n' "$fresh_output" | grep -Fq 'selected_task:'
+
 printf '%s\n' 'factory_workflow: OK'
