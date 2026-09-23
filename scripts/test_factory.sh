@@ -21,9 +21,11 @@ HOME="$tmp_home" RUSTUP_HOME="$rustup_home" CARGO_HOME="$cargo_home" \
   "$factory_root/install.sh" --workspace-root "$workspace_root" \
   --dotfile-root "$dotfile_root" --runtime-config-dir "$tmp_home/.config/agent-experience" \
   --default-task-id agent-benchmark-waza \
+  --jev-experience-retention on \
   --install-dir "$install_dir" >/dev/null
 [[ -x "$tmp_home/.local/bin/miyago-context-harness" ]]
 [[ -f "$tmp_home/.config/agent-experience/factory.env" ]]
+grep -Fq 'AGENT_JEV_EXPERIENCE_RETENTION=on' "$tmp_home/.config/agent-experience/factory.env"
 mkdir -p "$tmp_home/.config/agent-experience/personal-model"
 ln -s "$dotfile_root/config/ai/AGENTS.md" "$tmp_home/.config/agent-experience/AGENTS.md"
 ln -s "$workspace_root/personal-model/PROFILE.md" \
@@ -37,6 +39,7 @@ HOME="$tmp_home" XDG_CONFIG_HOME="$tmp_home/.config" \
 factory_bin="$install_dir/agent-workflow"
 doctor_output=$(HOME="$tmp_home" "$factory_bin" doctor)
 printf '%s\n' "$doctor_output" | grep -Fq 'status: OK'
+printf '%s\n' "$doctor_output" | grep -Fq 'jev_experience_retention: enabled'
 version_output=$("$factory_bin" version)
 printf '%s\n' "$version_output" | grep -Fq 'agent-experience-factory 0.1.0'
 runtime_list=$("$factory_bin" runtime list)

@@ -11,7 +11,9 @@ Context Harness binary 時，從指定的 canonical workspace 自動 build/insta
 - generated runtime entry 是否存在。
 - `<non-entry-root>` 是否被排除。
 
-預設不修改 shell startup，不使用 sudo，不自動安裝 Waza，不寫入 credential。
+預設不修改 shell startup，不使用 sudo，不自動安裝 Waza，不寫入 credential，且
+Jev experience retention 關閉。若明確啟用 Jev，執行期間會將通過本機隱私檢查的
+摘要送到 TypeSafe API；其他候選資料不會因此外送。
 若透過 `AGENT_CONTEXT_HARNESS_BIN` 明確指定 binary，installer 不會覆蓋該路徑；缺少時會直接失敗。
 Waza 是 real benchmark 的可選外部執行器；未安裝時仍可使用 mock benchmark，
 但 `plugin health --id waza` 會明確顯示 real runner 的能力缺口。
@@ -24,8 +26,15 @@ bash -n install.sh
 ./install.sh --dry-run \
   --workspace-root /path/to/agent-workspace \
   --dotfile-root /path/to/dotfile \
-  --non-entry-root /path/to/non-entry
+  --non-entry-root /path/to/non-entry \
+  --jev-experience-retention off
 ```
+
+若要啟用 Jev 判斷，加入 `--jev-experience-retention on`。呼叫 `agent-workflow`
+的 process 還必須有 `TYPESAFE_API_KEY`；沒有 key 時仍只使用本機候選，不會阻擋。
+Jev 不會收到來源路徑、證據檔、task ID 或原始對話。詳細 payload 與人工閘門見
+Context Harness 的經驗系統規格。隱私過濾只阻擋常見敏感資料形式，不是完整
+DLP；啟用代表允許合格摘要送到 TypeSafe。
 
 如果 source path 不是預設位置，使用：
 
@@ -41,7 +50,8 @@ bash -n install.sh
 ./install.sh \
   --workspace-root /path/to/agent-workspace \
   --dotfile-root /path/to/dotfile \
-  --non-entry-root /path/to/non-entry
+  --non-entry-root /path/to/non-entry \
+  --jev-experience-retention off
 ```
 
 安裝器會建立或更新：

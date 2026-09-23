@@ -34,7 +34,8 @@ runtime adapter 或 plugin 執行
     ↓
 驗證、benchmark、experience observation
     ↓
-candidate → human gate → confirmed experience
+candidate →（Jev 關閉：human gate）
+         →（Jev 開啟：keep → 可攜經驗庫；discard → 本機留痕；review → human gate）
 ```
 
 Factory 的入口是 `agent-workflow`。日常工作不需要直接操作 Context Harness 的底層參數，也不需要自己找 candidate ID。
@@ -66,6 +67,13 @@ agent-workflow experience import --input ./experience-pack --map OLD=NEW
 ```
 
 低風險的 observation、整理與 bundle 產生可以自動化；要把候選經驗寫成使用者自己的 Personal Model 或 shared rule，仍保留 human gate。
+
+可選的 Jev 經驗判斷預設關閉。安裝時明確設定 `--jev-experience-retention on`
+後，Context Harness 才會把通過本機隱私檢查的摘要送到 TypeSafe，由 Jev 判斷
+保留、略過或交給人工確認。保留的內容只進可攜經驗庫，不會自動升級成 Personal
+Model 或 shared rule。沒有 API key、遇到低信心或服務錯誤時，流程維持本機候選
+與人工閘門，不阻擋 session。隱私檢查會攔截常見路徑、credential 與程式碼形狀，
+但不是完整 DLP；啟用代表允許合格摘要送到 TypeSafe。
 
 ## Benchmark 與 Waza
 

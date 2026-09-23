@@ -39,10 +39,16 @@ agent-workflow plugin run --id waza --engine mock --output <result>
 | Core Harness | `agent-workspace` | 發現、建置、呼叫、驗證 binary |
 | Runtime config | `dotfile/config/ai` | 接入、檢查、啟動 adapter |
 | Private experience | `~/.local/share/agent-experience` | 匯出、匯入、權限與 scope 檢查 |
+| Jev decision | TypeSafe | Per-device opt-in; classifies filtered summaries |
 | Benchmark | Waza 或替代 runner | 只提供標準化結果，不寫回規則 |
 
 插件的 manifest、生命週期與結果格式見 [`PLUGIN-CONTRACT.md`](PLUGIN-CONTRACT.md)。
 Factory 只負責發現、健康檢查與轉發；插件仍保有自己的執行細節。
+
+Jev experience retention 在 installer 中預設關閉。啟用後，Context Harness 只送
+通過本機隱私檢查的摘要、類型與重複次數；缺少 API key 或遇到錯誤時不阻擋
+bootstrap。Jev 的 `keep` 只寫入可攜經驗庫，不自動改寫其他規則層。
+本機篩檢不是完整 DLP；啟用設定代表使用者接受合格摘要送至 TypeSafe。
 
 # P1 完成條件
 

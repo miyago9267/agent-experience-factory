@@ -18,6 +18,14 @@ if [[ -f "$config_file" ]]; then
   # Explicit environment variables below still take precedence.
   source "$config_file"
 fi
+if [[ -z "${JEV_EXPERIENCE_RETENTION+x}" ]]; then
+  case "${AGENT_JEV_EXPERIENCE_RETENTION:-off}" in
+    on) JEV_EXPERIENCE_RETENTION=1 ;;
+    off) JEV_EXPERIENCE_RETENTION=0 ;;
+    *) JEV_EXPERIENCE_RETENTION=0 ;;
+  esac
+fi
+export JEV_EXPERIENCE_RETENTION
 workspace_root="${AGENT_FACTORY_WORKSPACE_ROOT:-${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/agent-workspace}}"
 dotfile_root="${AGENT_FACTORY_DOTFILE_ROOT:-${MIYAGO_DOTFILE_ROOT:-$HOME/dotfile}}"
 core_binary="${AGENT_CONTEXT_HARNESS_BIN:-${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}}"
@@ -189,6 +197,8 @@ plugin() {
 }
 
 doctor() {
+  printf 'jev_experience_retention: %s\n' \
+    "$(if [[ "$JEV_EXPERIENCE_RETENTION" == 1 ]]; then printf enabled; else printf disabled; fi)"
   require_path "$workspace_root/routing.yaml" workspace-routing
   require_path "$workspace_root/records/tasks/index.yaml" task-registry
   require_path "$dotfile_root/config/ai/AGENT-ENTRY.md" canonical-entry

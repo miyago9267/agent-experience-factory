@@ -8,6 +8,7 @@ runtime_config_dir="${AGENT_FACTORY_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME
 data_root="${AGENT_FACTORY_DATA_ROOT:-${XDG_DATA_HOME:-$HOME/.local/share}/agent-experience}"
 non_entry_root="${AGENT_FACTORY_NON_ENTRY_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-experience/non-entry}"
 default_task_id="${AGENT_FACTORY_DEFAULT_TASK_ID:-}"
+jev_experience_retention="${AGENT_JEV_EXPERIENCE_RETENTION:-off}"
 workspace_root="${AGENT_FACTORY_WORKSPACE_ROOT:-${MIYAGO_AGENT_WORKSPACE_ROOT:-}}"
 dotfile_root="${AGENT_FACTORY_DOTFILE_ROOT:-${MIYAGO_DOTFILE_ROOT:-}}"
 dry_run=0
@@ -24,6 +25,7 @@ usage: ./install.sh [--dry-run] [--ref REF]
   --data-root PATH       private experience data directory
   --non-entry-root PATH  explicitly excluded path
   --default-task-id ID   local fallback task when cwd has no unique match
+  --jev-experience-retention MODE  send filtered experience summaries to Jev: on|off (default: off)
   --ref REF              visible release/ref label (default: local)
 EOF
 }
@@ -40,12 +42,17 @@ while (($#)); do
     --data-root) data_root="${2:?missing value for --data-root}"; shift 2 ;;
     --non-entry-root) non_entry_root="${2:?missing value for --non-entry-root}"; shift 2 ;;
     --default-task-id) default_task_id="${2:?missing value for --default-task-id}"; shift 2 ;;
+    --jev-experience-retention) jev_experience_retention="${2:?missing value for --jev-experience-retention}"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
 done
 
 [[ "$ref" != *[/$'\n']* ]] || { printf 'unsafe ref\n' >&2; exit 2; }
+[[ "$jev_experience_retention" == on || "$jev_experience_retention" == off ]] || {
+  printf 'Jev experience retention must be on or off\n' >&2
+  exit 2
+}
 [[ "$install_dir" = /* ]] || { printf 'install dir must be absolute\n' >&2; exit 2; }
 [[ "$config_dir" = /* ]] || { printf 'config dir must be absolute\n' >&2; exit 2; }
 [[ "$workspace_root" = /* && "$dotfile_root" = /* && "$runtime_config_dir" = /* && "$data_root" = /* && "$non_entry_root" = /* ]] || {
@@ -97,6 +104,7 @@ config_file="$config_dir/factory.env"
 printf 'factory_ref: %s\n' "$ref"
 printf 'workspace_root: %s\ndotfile_root: %s\ntarget: %s\n' \
   "$workspace_root" "$dotfile_root" "$target"
+printf 'jev_experience_retention: %s\n' "$jev_experience_retention"
 printf 'config_file: %s\n' "$config_file"
 if ((dry_run)); then
   printf '%s\n' 'dry_run: no files changed'
@@ -118,6 +126,7 @@ fi
   printf 'AGENT_FACTORY_RUNTIME_CONFIG_DIR=%q\n' "$runtime_config_dir"
   printf 'AGENT_FACTORY_DATA_ROOT=%q\n' "$data_root"
   printf 'AGENT_FACTORY_NON_ENTRY_ROOT=%q\n' "$non_entry_root"
+  printf 'AGENT_JEV_EXPERIENCE_RETENTION=%q\n' "$jev_experience_retention"
   [[ -n "$default_task_id" ]] && printf 'AGENT_FACTORY_DEFAULT_TASK_ID=%q\n' "$default_task_id"
 } > "$config_file"
 if [[ -e "$target" && ! -L "$target" ]]; then
