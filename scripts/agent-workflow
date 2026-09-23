@@ -28,18 +28,28 @@ fi
 export JEV_EXPERIENCE_RETENTION
 workspace_root="${AGENT_FACTORY_WORKSPACE_ROOT:-${MIYAGO_AGENT_WORKSPACE_ROOT:-$HOME/agent-workspace}}"
 dotfile_root="${AGENT_FACTORY_DOTFILE_ROOT:-${MIYAGO_DOTFILE_ROOT:-$HOME/dotfile}}"
-core_binary="${AGENT_CONTEXT_HARNESS_BIN:-${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/miyago-context-harness}}"
+core_binary="${AGENT_CONTEXT_HARNESS_BIN:-${MIYAGO_CONTEXT_HARNESS_BIN:-$HOME/.local/bin/context-harness}}"
 runtime_config_dir="${AGENT_FACTORY_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-experience}"
 data_root="${AGENT_FACTORY_DATA_ROOT:-${XDG_DATA_HOME:-$HOME/.local/share}/agent-experience}"
 non_entry_root="${AGENT_FACTORY_NON_ENTRY_ROOT:-${XDG_CONFIG_HOME:-$HOME/.config}/agent-experience/non-entry}"
 default_task_id="${AGENT_FACTORY_DEFAULT_TASK_ID:-}"
+experience_task_id="${AGENT_FACTORY_EXPERIENCE_TASK_ID:-${MIYAGO_EXPERIENCE_TASK_ID:-}}"
+personal_vault_root="${AGENT_PERSONAL_VAULT_ROOT:-${MIYAGO_PERSONAL_VAULT_ROOT:-}}"
+sre_vault_root="${AGENT_SRE_VAULT_ROOT:-${MIYAGO_SRE_VAULT_ROOT:-}}"
 export AGENT_FACTORY_WORKSPACE_ROOT="$workspace_root"
 export AGENT_FACTORY_ROOT="${AGENT_FACTORY_ROOT:-$factory_root}"
 export AGENT_FACTORY_DOTFILE_ROOT="$dotfile_root"
+export AGENT_CONTEXT_WORKSPACE_ROOT="$workspace_root"
+export AGENT_DOTFILE_ROOT="$dotfile_root"
 export AGENT_CONTEXT_HARNESS_BIN="$core_binary"
 export AGENT_FACTORY_RUNTIME_CONFIG_DIR="$runtime_config_dir"
 export AGENT_FACTORY_DATA_ROOT="$data_root"
+export AGENT_EXPERIENCE_DATA_ROOT="$data_root"
 export AGENT_FACTORY_NON_ENTRY_ROOT="$non_entry_root"
+export AGENT_NON_ENTRY_ROOT="$non_entry_root"
+export AGENT_EXPERIENCE_TASK_ID="$experience_task_id"
+[[ -z "$personal_vault_root" ]] || export AGENT_PERSONAL_VAULT_ROOT="$personal_vault_root"
+[[ -z "$sre_vault_root" ]] || export AGENT_SRE_VAULT_ROOT="$sre_vault_root"
 # Compatibility exports for older Context Harness and dotfile adapters.
 export MIYAGO_AGENT_WORKSPACE_ROOT="$workspace_root"
 export MIYAGO_AGENT_FACTORY_ROOT="$factory_root"
@@ -106,6 +116,10 @@ resolve_task_for_cwd() {
     printf '%s\n' "$MIYAGO_TASK_ID"
     return 0
   fi
+  if [[ -n "${AGENT_TASK_ID:-}" ]]; then
+    printf '%s\n' "$AGENT_TASK_ID"
+    return 0
+  fi
   local discovered
   if discovered="$($core_binary discover --workspace-root "$workspace_root" --cwd "$cwd" 2>/dev/null)"; then
     printf '%s\n' "$discovered" | awk -F': ' '$1 == "task_id" { print $2; exit }'
@@ -125,7 +139,7 @@ run_core_with_cwd() {
   if ! has_option --cwd "$@"; then
     command+=(--cwd "$cwd")
   fi
-  if ! has_option --task "$@" && [[ -z "${MIYAGO_TASK_ID:-}" ]] && [[ -n "$default_task_id" ]]; then
+  if ! has_option --task "$@" && [[ -z "${MIYAGO_TASK_ID:-${AGENT_TASK_ID:-}}" ]] && [[ -n "$default_task_id" ]]; then
     if ! "$core_binary" discover --workspace-root "$workspace_root" --cwd "$cwd" >/dev/null 2>&1; then
       command+=(--task "$default_task_id")
     fi
@@ -137,7 +151,7 @@ run_core_with_cwd() {
 plugin_entrypoint() {
   local manifest="$1" value
   value="$(awk -F': ' '$1 == "entrypoint" { print $2; exit }' "$manifest")"
-  [[ -n "$value" && "$value" != /* && "$value" != *monika* ]] || {
+  [[ -n "$value" && "$value" != /* ]] || {
     printf 'invalid plugin entrypoint in %s\n' "$manifest" >&2
     return 1
   }
@@ -339,8 +353,8 @@ session_start() {
     if [[ -n "$experience_task" ]]; then
       sync_tasks+=("$experience_task")
     else
-      sync_tasks+=(personal-experience-autocapture)
-      [[ "$task" == personal-experience-autocapture ]] || sync_tasks+=("$task")
+      [[ -z "$experience_task_id" ]] || sync_tasks+=("$experience_task_id")
+      [[ "$task" == "$experience_task_id" ]] || sync_tasks+=("$task")
     fi
     local current_experience_task sync_args
     for current_experience_task in "${sync_tasks[@]}"; do
@@ -390,6 +404,6 @@ case "${1:-}" in
   export) shift; exec "$core_binary" export --workspace-root "$workspace_root" "$@" ;;
   import) shift; exec "$core_binary" import --workspace-root "$workspace_root" "$@" ;;
   plugin) shift; plugin "$@" ;;
-  version) printf '%s\n' 'agent-experience-factory 0.1.0' ;;
+  version) printf '%s\n' 'agent-experience-factory 0.2.0' ;;
   *) usage >&2; exit 2 ;;
 esac

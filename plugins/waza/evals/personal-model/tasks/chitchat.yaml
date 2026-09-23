@@ -1,8 +1,0 @@
-id: chitchat
-name: Natural office metaphor conversation
-description: 以自然對話回應 Agent 像一群認真的實習生的比喻，不強行轉成待辦。
-inputs:
-  prompt: "自然聊聊 Agent 像在辦公室裡養了一群很認真的實習生，不要整理成待辦。"
-expected:
-  output_contains:
-    - "實習生"

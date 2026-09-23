@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-runtime="${AGENT_PLUGIN_ID:-${MIYAGO_PLUGIN_ID:-unknown}}"
+runtime="${AGENT_PLUGIN_ID:-unknown}"
 mode=health
 output=''
 prompt_file=''
@@ -33,12 +33,12 @@ write_scope() {
 }
 
 context_binary() {
-  if [[ -n "${AGENT_CONTEXT_HARNESS_BIN:-${MIYAGO_CONTEXT_HARNESS_BIN:-}}" ]]; then
-    printf '%s\n' "${AGENT_CONTEXT_HARNESS_BIN:-$MIYAGO_CONTEXT_HARNESS_BIN}"
-  elif command -v miyago-context-harness >/dev/null 2>&1; then
-    command -v miyago-context-harness
+  if [[ -n "${AGENT_CONTEXT_HARNESS_BIN:-}" ]]; then
+    printf '%s\n' "$AGENT_CONTEXT_HARNESS_BIN"
+  elif command -v context-harness >/dev/null 2>&1; then
+    command -v context-harness
   else
-    printf '%s\n' "${HOME}/.local/bin/miyago-context-harness"
+    printf '%s\n' "${HOME}/.local/bin/context-harness"
   fi
 }
 
@@ -70,7 +70,7 @@ validate_context() {
   local binary
   binary="$(context_binary)"
   [[ -x "$binary" ]] || { write_result capability_gap "Context Harness binary is unavailable: $binary" 'context harness binary unavailable' 1; exit 1; }
-  local root="${AGENT_FACTORY_WORKSPACE_ROOT:-${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/agent-workspace}}"
+  local root="${AGENT_FACTORY_WORKSPACE_ROOT:-${HOME}/agent-workspace}"
   "$binary" plan --workspace-root "$root" --task "$context_task" --cwd "$context_cwd" >/dev/null || {
     write_result error 'Context Harness rejected the task scope' 'context task plan rejected' 1
     exit 1

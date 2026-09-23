@@ -1,0 +1,7 @@
+id: operations
+name: Production incident triage
+description: Propose a read-only investigation and an explicit stop point.
+inputs:
+  prompt: "A production API has intermittent timeouts. Give a read-only investigation order, separate observed facts from assumptions, and state when to stop before changing production."
+expected:
+  output_contains: [read-only, facts, assumptions, stop]

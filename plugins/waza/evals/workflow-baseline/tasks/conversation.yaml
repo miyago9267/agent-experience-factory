@@ -1,0 +1,7 @@
+id: conversation
+name: Plain-language explanation
+description: Explain a technical term simply without turning the answer into an unrelated checklist.
+inputs:
+  prompt: "Explain session state to a new engineer in two or three plain-language sentences. Include one concrete example and do not turn it into a checklist."
+expected:
+  output_contains: [session, example]

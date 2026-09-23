@@ -2,11 +2,11 @@
 
 ## 範圍
 
-本 installer 會建立使用者層級入口 `~/.local/bin/agent-workflow`，並在缺少
-Context Harness binary 時，從指定的 canonical workspace 自動 build/install。
-它也會驗證：
+本 installer 會建立使用者層級入口 `~/.local/bin/agent-workflow`，並從 Factory
+checkout 建置通用 Context Harness。使用者自己的 workspace 只提供 routing、task
+registry 與其他本機資料。安裝器會驗證：
 
-- `agent-workspace` 是否存在且包含 Rust harness；缺少 binary 時自動建置。
+- workspace 是否包含 `routing.yaml` 與 task registry。
 - `dotfile/config/ai` 是否為 canonical source。
 - generated runtime entry 是否存在。
 - `<non-entry-root>` 是否被排除。
@@ -24,7 +24,7 @@ Waza 是 real benchmark 的可選外部執行器；未安裝時仍可使用 mock
 sed -n '1,260p' INSTALL.md
 bash -n install.sh
 ./install.sh --dry-run \
-  --workspace-root /path/to/agent-workspace \
+  --workspace-root /path/to/context-workspace \
   --dotfile-root /path/to/dotfile \
   --non-entry-root /path/to/non-entry \
   --jev-experience-retention off
@@ -39,7 +39,7 @@ DLP；啟用代表允許合格摘要送到 TypeSafe。
 如果 source path 不是預設位置，使用：
 
 ```bash
-./install.sh --workspace-root /path/to/agent-workspace \
+./install.sh --workspace-root /path/to/context-workspace \
   --dotfile-root /path/to/dotfile \
   --non-entry-root /path/to/non-entry
 ```
@@ -48,9 +48,10 @@ DLP；啟用代表允許合格摘要送到 TypeSafe。
 
 ```bash
 ./install.sh \
-  --workspace-root /path/to/agent-workspace \
+  --workspace-root /path/to/context-workspace \
   --dotfile-root /path/to/dotfile \
   --non-entry-root /path/to/non-entry \
+  --experience-task-id YOUR_LOCAL_EXPERIENCE_TASK \
   --jev-experience-retention off
 ```
 
@@ -58,13 +59,18 @@ DLP；啟用代表允許合格摘要送到 TypeSafe。
 
 ```text
 ~/.local/bin/agent-workflow
+~/.local/bin/context-harness
 ~/.config/agent-experience/factory.env
 ```
 
-`factory.env` 只保存 workspace 與 dotfile 的 source root，讓安裝時指定的路徑在
-之後不依賴當前 shell 環境仍能生效。若要指定配置目錄，可使用
+`factory.env` 只保存本機 source roots、experience task ID 與工具位置，不包含任務
+內容或經驗資料。若要指定配置目錄，可使用
 `--config-dir PATH` 與 `--runtime-config-dir PATH`；環境變數
 `AGENT_FACTORY_WORKSPACE_ROOT`、`AGENT_FACTORY_DOTFILE_ROOT` 仍可在執行時覆蓋已安裝設定。
+
+若本機 hook 仍呼叫舊 binary 名稱，可使用
+`--compat-binary-alias /absolute/path/to/old-command` 建立本機相容 symlink；Factory
+預設不建立個人化名稱。
 
 若目標是既有非 symlink 檔案，會先建立帶時間戳的 backup，不會直接覆寫。
 
@@ -77,7 +83,8 @@ agent-workflow bootstrap --runtime codex --cwd "$PWD"
 agent-workflow runtime doctor
 agent-workflow resume --cwd "$PWD"
 agent-workflow handoff --reason '交接給下一個 session'
-agent-workflow experience sync --runtime codex --cwd "$PWD"
+agent-workflow experience sync --runtime codex --cwd "$PWD" \
+  --experience-task YOUR_LOCAL_EXPERIENCE_TASK
 agent-workflow plugin health --id waza
 ```
 

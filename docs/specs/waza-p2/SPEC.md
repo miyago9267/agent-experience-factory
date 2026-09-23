@@ -1,7 +1,7 @@
 ---
 title: Waza-compatible plugin factory P2
-status: active
-updated: 2026-08-21
+status: complete
+updated: 2026-09-23
 ---
 
 # 目的
@@ -58,26 +58,13 @@ Canonical examples：
 
 ## Verification status
 
-- Local verification：Factory tests、plugin contract tests、shellcheck、Rust tests
-  均通過。
-- Sol verification：runtime manifest 第一輪為 `INCONCLUSIVE`，原因是 verifier 無法
-  證明被排除專案的 dirty baseline 沒有變化；該專案不得被讀取，因此不採用這項旁證。
-  第一輪提出的 Bash 3.2 fail-closed finding 已修正，但新的 Sol adjudication 因
-  verifier thread limit 尚未執行。
-- Phase 4 execution policy 的 Sol 初次 gate 為 `REVISE`；findings 與 dispositions
-  記錄在 `records/verification/phase4-execution-policy-security-review.md`，修正後
-  已由 Sol security-reviewer 判定 `SECURITY_READY`，0 個 P0/P1/P2 findings。
-- Waza `0.38.7` 已依官方 installer 安裝並通過 checksum；官方 `waza check` 顯示
-  eval schema 有效。Waza mock 與 real `copilot-sdk` 各執行三個情境、每情境兩次。
-- Mock 與 real benchmark 第二輪皆為 3/3 task、6/6 trial 通過，aggregate score
-  `1.00`。第一輪 real run 暴露出共用 grader 把 `scope` 套用到所有情境的假陰性，
-  已改成各 task 自己的 deterministic `output_contains` 條件並重跑通過。
-- Factory 的 `waza --suite real` 現在必須帶 `--context-task`，先以 Context Harness
-  `plan` 驗證 task、profile、scope 與 human gate，再允許 Waza 執行；normalized result
-  會保留每個 task/trial/grader 與 scope binding evidence。
-- Claude、Codex、Gemini、Grok 的共用 headless adapter 已接通，能保存 external
-  session result 與 deterministic grader；provider 登入或帳號層級不足時仍明確回報
-  `capability_gap`，不把 CLI exit 0 當成成功。
+- Plugin contract、mock execution、portable fixture、Rust unit 與 shell integration
+  tests are maintained in the Factory repository and run through `scripts/test_all.sh`.
+- Real runtime benchmarks require the selected provider CLI and explicit local task
+  scope. Provider unavailability is reported as `capability_gap`; CLI exit status alone
+  is not treated as a passing result.
+- Benchmark outputs and task bindings are local runtime data. They are not committed as
+  reusable Factory fixtures.
 
 # 邊界
 

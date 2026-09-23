@@ -1,0 +1,7 @@
+id: architecture
+name: Change impact review
+description: Identify overlap, added capability, risk, and a minimum validation.
+inputs:
+  prompt: "A proposal adds a shared document-retrieval layer to an agent. Identify existing components it overlaps with, one distinct capability it may add, its main risk, and the smallest useful validation."
+expected:
+  output_contains: [existing, capability, risk, validation]

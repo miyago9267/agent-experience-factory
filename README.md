@@ -10,12 +10,12 @@ Factory 與來源資料刻意分離，避免把設定、經驗與執行器混成
 
 | 元件 | 所屬 | 責任 |
 | --- | --- | --- |
-| Agent Workflow Factory | 本 repository | 安裝入口、工作流程 facade、plugin contract、benchmark、diagnostic |
-| Context Harness workspace | 外部 source | Rust Harness、routing、task/state、experience、global context |
+| Agent Workflow Factory | 本 repository | Rust Context Harness、安裝入口、工作流程 facade、plugin contract、benchmark、diagnostic |
+| Context workspace | 本機資料來源 | routing、task/state、Personal Model、project maps 與目前工作上下文 |
 | dotfile | 外部 source | Codex、Claude、Grok、OpenCode 等 runtime 的設定與 bootstrap adapter |
 | private experience data | 使用者資料目錄 | 已確認經驗、候選經驗、觀察與 consumption bundle |
 
-Factory 不複製或接管任何 runtime 設定，也不把 dotfile 內容當成自己的 canonical source。安裝時透過 source-root 設定把它們接起來；因此可以換機、換路徑或換 runtime，而不必重寫 Factory 本身。
+Factory 只版控通用工具，不複製或接管任何 runtime 設定，也不把 dotfile 內容當成自己的 canonical source。routing、task、Personal Model、知識與經驗資料由使用者自己的目錄管理；安裝時透過 source-root 設定把它們接起來，因此可換機、換路徑或換 runtime，而不必重寫 Factory 本身。
 
 使用者可以指定任何 non-entry path；它永遠不是本工廠的資料來源、fallback 或測試來源。
 
@@ -128,23 +128,25 @@ Factory installer 只建立使用者層級入口，不使用 sudo，也不偷偷
 
 ```bash
 ./install.sh --dry-run \
-  --workspace-root /path/to/agent-workspace \
+  --workspace-root /path/to/context-workspace \
   --dotfile-root /path/to/dotfile \
   --non-entry-root /path/to/non-entry
 
 ./install.sh \
-  --workspace-root /path/to/agent-workspace \
+  --workspace-root /path/to/context-workspace \
   --dotfile-root /path/to/dotfile \
-  --non-entry-root /path/to/non-entry
+  --non-entry-root /path/to/non-entry \
+  --experience-task-id YOUR_LOCAL_EXPERIENCE_TASK
 ```
 
 安裝結果包含：
 
 - `~/.local/bin/agent-workflow`
+- `~/.local/bin/context-harness`
 - `~/.config/agent-experience/factory.env`
-- Context Harness binary 的 build/install link（缺少時才建立）
+- Factory 自己建置的 `context-harness` binary link（缺少時才建立）
 
-`factory.env` 只保存 source roots；執行時仍可用 `AGENT_FACTORY_WORKSPACE_ROOT`、`AGENT_FACTORY_DOTFILE_ROOT`、`AGENT_CONTEXT_HARNESS_BIN` 與 `AGENT_FACTORY_RUNTIME_CONFIG_DIR` 覆蓋。這使 Factory 不依賴任何特定使用者的固定目錄。
+`factory.env` 只保存本機 source roots、experience task ID 與工具位置，不保存任務或經驗內容；執行時仍可用 `AGENT_FACTORY_WORKSPACE_ROOT`、`AGENT_FACTORY_DOTFILE_ROOT`、`AGENT_CONTEXT_HARNESS_BIN` 與 `AGENT_FACTORY_RUNTIME_CONFIG_DIR` 覆蓋。這使 Factory 不依賴任何特定使用者的固定目錄。
 
 安裝後先執行：
 
@@ -161,6 +163,7 @@ agent-workflow runtime sync --all
 ## 測試
 
 ```bash
+bash scripts/test_all.sh
 bash scripts/test_factory.sh
 bash scripts/test_factory_workflow.sh
 bash scripts/test_plugin_contract.sh
@@ -177,6 +180,6 @@ bash scripts/run_cross_project_smoke.sh
 
 ## 版本與責任邊界
 
-`v0.1.0` 是第一個可安裝的 Factory package：核心入口、source registry、runtime bootstrap、experience facade、plugin contract 與 Waza-compatible benchmark 已封存。
+`v0.2.0` 將通用 Context Harness 納入 Factory，並將個人設定、任務狀態與經驗資料維持在本機來源；installer 與回歸測試不再依賴某一台裝置的路徑或 task ID。
 
 以下是後續觀察或擴充，不是安裝必要條件：provider parity 的長期結果、VSCode 使用負擔、向量搜尋、常駐服務、MCP search backend 與自動學習模型。

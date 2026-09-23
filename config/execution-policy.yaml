@@ -1,0 +1,68 @@
+version: 1
+default_profile: review
+profiles:
+  planning:
+    effort: medium
+    model: balanced-reasoning
+    skills: [context-assembly, architecture-review]
+    tools: [filesystem-read, shell-read, task-state-write]
+    delegation: bounded-readonly
+    verification: "確認目標、範圍、方案與停止條件；不修改實作"
+    human_gate: "方案定案與跨專案範圍變更前"
+    allowed_actions:
+      - "讀取 task scope 內的文件"
+      - "提出可比較的方案"
+      - "透過 checkpoint 更新 current_state、completed、next_actions、blockers、decisions、evidence"
+    notes: "只允許上述六個 task state 欄位；不得更新 scope、excluded_scope 或 open_questions。先把問題定義清楚，再進入 implementation。"
+  implementation:
+    effort: high
+    model: coding-reasoning
+    skills: [tdd, git-workflow, safe-ops]
+    tools: [filesystem-read, filesystem-write, shell]
+    delegation: bounded-parallel
+    verification: "先做 targeted verification；高風險邏輯、migration、security 與 public API 需要更完整測試"
+    human_gate: "跨 repository、scope expansion、production、credential、destructive operation 或需求改變時"
+    allowed_actions:
+      - "修改 scope 內的程式與測試"
+      - "執行 local build 與 targeted tests"
+      - "更新 completed、evidence 與 next_actions"
+    notes: "Agent 可自主完成低風險實作；決策與例外保留人工介入。"
+  debugging:
+    effort: high
+    model: debugging-reasoning
+    skills: [diagnose, tdd, log-analysis]
+    tools: [filesystem-read, filesystem-write, shell]
+    delegation: bounded-readonly
+    verification: "先建立可重現的 pass/fail signal，再修正並回歸驗證"
+    human_gate: "需要 production 寫入、credential、scope expansion、destructive operation 或無法重現時"
+    allowed_actions:
+      - "讀取 scope 內的 logs、tests 與 source"
+      - "建立最小 reproduction"
+      - "修改並驗證修正"
+    notes: "先證明原因，再做修復；不要用猜測代替診斷。"
+  operations:
+    effort: high
+    model: operations-reasoning
+    skills: [health-check, sre-locate, safe-ops]
+    tools: [filesystem-read, shell-read, approved-ops]
+    delegation: bounded-readonly
+    verification: "先確認環境、依賴、影響面與 rollback，再執行低風險檢查"
+    human_gate: "production write、deployment、credential、scope expansion、destructive operation 與治理決策前"
+    allowed_actions:
+      - "執行 read-only health check 與定位"
+      - "整理 runbook、證據與 handoff"
+      - "在明確授權後執行 scope 內操作"
+    notes: "維運任務預設保留人工決策點，不把工具成功當成服務健康。"
+  review:
+    effort: medium
+    model: review-reasoning
+    skills: [code-review, context-assembly]
+    tools: [filesystem-read, shell-read]
+    delegation: bounded-readonly
+    verification: "以固定 rubric、diff、測試與直接證據判斷；記錄 capability gaps"
+    human_gate: "結論涉及需求取捨、規則升級或正式交付前"
+    allowed_actions:
+      - "讀取 scope 內的實作與證據"
+      - "執行不改變狀態的驗證"
+      - "整理 findings、risks 與 next_actions"
+    notes: "允許 provider 文風與能力差異，不用文字相似度判斷 parity。"

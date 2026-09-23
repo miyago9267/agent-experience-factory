@@ -1,8 +1,8 @@
-name: personal-model-behavior-parity-real
-description: Provider-neutral fixed scenarios using Waza's real Copilot SDK executor
-skill: personal-model
+name: agent-workflow-baseline-real
+description: Generic behavior checks using Waza's real executor
+skill: workflow-baseline
 schemaVersion: "1.2"
-version: "0.1.0"
+version: "0.2.0"
 config:
   executor: copilot-sdk
   model: auto
@@ -10,7 +10,7 @@ config:
   timeout_seconds: 120
   parallel: false
 metrics:
-  - name: behavior_consistency
+  - name: workflow_contract
     weight: 1.0
     threshold: 0.8
 tasks:

@@ -1,0 +1,17 @@
+name: agent-workflow-baseline
+description: Generic behavior checks for scope, evidence, safety, and plain-language communication
+skill: workflow-baseline
+schemaVersion: "1.2"
+version: "0.2.0"
+config:
+  executor: mock
+  model: mock
+  trials_per_task: 2
+  timeout_seconds: 120
+  parallel: false
+metrics:
+  - name: workflow_contract
+    weight: 1.0
+    threshold: 1.0
+tasks:
+  - "tasks/*.yaml"

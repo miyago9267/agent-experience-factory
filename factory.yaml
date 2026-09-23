@@ -1,8 +1,10 @@
 version: 1
 kind: agent-workflow-factory
 factory_id: agent-experience-factory
-factory_version: 0.1.0
+factory_version: 0.2.0
 core:
+  source_root: ${AGENT_FACTORY_ROOT}
+  binary_name: context-harness
   workspace_root: ${AGENT_FACTORY_WORKSPACE_ROOT}
   binary: ${AGENT_CONTEXT_HARNESS_BIN}
 configuration:

@@ -3,14 +3,15 @@ set -Eeuo pipefail
 
 factory_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 runtime_list=(claude codex gemini grok)
-scenario_list=(architecture operations chitchat)
+scenario_list=(architecture operations conversation)
 trials=2
-output_root="${factory_root}/results/runtime-parity"
-context_task=agent-benchmark-waza
-context_cwd="$factory_root"
+output_root="$factory_root/results/runtime-parity"
+context_task="${AGENT_FACTORY_DEFAULT_TASK_ID:-}"
+context_cwd="$PWD"
+scope_paths=()
 
 usage() {
-  printf '%s\n' 'usage: run_runtime_parity.sh [--runtime RUNTIME] [--trials N] [--output-dir PATH] [--context-task TASK_ID] [--context-cwd PATH]'
+  printf '%s\n' 'usage: run_runtime_parity.sh --context-task TASK_ID --scope PATH [--scope PATH ...] [--runtime RUNTIME] [--trials N] [--output-dir PATH] [--context-cwd PATH]'
 }
 
 while (($#)); do
@@ -20,29 +21,43 @@ while (($#)); do
     --output-dir) output_root="${2:?missing value for --output-dir}"; shift 2 ;;
     --context-task) context_task="${2:?missing value for --context-task}"; shift 2 ;;
     --context-cwd) context_cwd="${2:?missing value for --context-cwd}"; shift 2 ;;
+    --scope) scope_paths+=("${2:?missing value for --scope}"); shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) printf 'unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
 done
 
+[[ -n "$context_task" ]] || { printf '%s\n' '--context-task is required; Factory does not choose a local task for you' >&2; exit 2; }
 [[ "$trials" =~ ^[1-9][0-9]*$ ]] || { printf 'trials must be positive\n' >&2; exit 2; }
+(("${#scope_paths[@]}" > 0)) || { printf '%s\n' 'at least one --scope PATH is required' >&2; exit 2; }
+[[ -d "$context_cwd" ]] || { printf 'context cwd is not a directory: %s\n' "$context_cwd" >&2; exit 2; }
+for scope_path in "${scope_paths[@]}"; do
+  [[ -d "$scope_path" ]] || { printf 'scope is not a directory: %s\n' "$scope_path" >&2; exit 2; }
+done
+
 mkdir -p "$output_root"
 summary="$output_root/summary.yaml"
 {
-  printf '%s\n' 'version: 1' 'kind: runtime_parity_summary' "context_task: $context_task" "trials: $trials" 'results:'
+  printf '%s\n' 'version: 1' 'kind: runtime_parity_summary'
+  printf 'context_task: %s\ntrials: %s\n' "$context_task" "$trials"
+  printf '%s\n' 'results:'
 } > "$summary"
 
 for runtime in "${runtime_list[@]}"; do
   for scenario in "${scenario_list[@]}"; do
-    prompt_file="$factory_root/fixtures/runtime-parity/${scenario}.txt"
+    prompt_file="$factory_root/fixtures/runtime-parity/$scenario.txt"
     case "$scenario" in
-      architecture) expected_terms=(既有 成本 風險 方案) ;;
-      operations) expected_terms=(調查 事實 停止) ;;
-      chitchat) expected_terms=(實習生) ;;
+      architecture) expected_terms=(重疊 風險 驗證) ;;
+      operations) expected_terms=(事實 假設 停止) ;;
+      conversation) expected_terms=(狀態 例子) ;;
     esac
     expect_args=()
     for term in "${expected_terms[@]}"; do
       expect_args+=(--expect "$term")
+    done
+    scope_args=()
+    for scope_path in "${scope_paths[@]}"; do
+      scope_args+=(--scope "$scope_path")
     done
     for ((trial = 1; trial <= trials; trial++)); do
       result="$output_root/${runtime}-${scenario}-${trial}.yaml"
@@ -53,9 +68,7 @@ for runtime in "${runtime_list[@]}"; do
         --cwd "$context_cwd" \
         --context-task "$context_task" \
         --context-cwd "$context_cwd" \
-        --scope <factory-root> \
-        --scope <agent-workspace-root> \
-        --scope <dotfile-root> \
+        "${scope_args[@]}" \
         "${expect_args[@]}" \
         --output "$result" >"$log" 2>&1
       rc=$?

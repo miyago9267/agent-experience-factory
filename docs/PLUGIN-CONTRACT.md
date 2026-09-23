@@ -57,7 +57,7 @@ kind: plugin_result
 plugin_id: waza
 plugin_version: 0.1.0
 status: pass
-task_id: personal-model-behavior-parity
+task_id: agent-workflow-baseline
 runtime: provider-neutral
 model: unknown
 scenario: operations
@@ -71,7 +71,7 @@ grader_summary: deterministic mock plan only
 graders: []
 tasks: []
 eval:
-  name: personal-model-behavior-parity
+  name: agent-workflow-baseline
   version: 0.1.0
   executor: mock
   trials_per_task: 2
@@ -81,8 +81,8 @@ errors: []
 ```
 
 `status` 只能是 `pass`、`fail`、`capability_gap`、`inconclusive` 或 `error`。
-結果不等於 Personal Model 規則，也不會直接寫回經驗庫；要進入經驗流程仍
-需走既有的 observation、candidate 與 human gate。
+結果只代表本次 benchmark 證據，不會直接寫回使用者的個人規則或經驗庫；要進入
+經驗流程仍需走 observation、candidate 與 human gate。
 
 ## Waza 的位置
 

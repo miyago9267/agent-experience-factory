@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 plugin_root="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 manifest="$plugin_root/manifest.yaml"
-eval_file="$plugin_root/evals/personal-model/eval.yaml"
+eval_file="$plugin_root/evals/workflow-baseline/eval.yaml"
 
 usage() {
   printf '%s\n' 'usage: adapter.sh <health|plan|run> [--output PATH] [--engine mock|waza] [--suite mock|real] [--context-task TASK_ID] [--context-cwd PATH]'
@@ -26,12 +26,12 @@ write_result() {
   {
     printf '%s\n' 'schema_version: "1"' 'kind: plugin_result' 'plugin_id: waza' 'plugin_version: 0.1.0'
     printf 'status: %s\n' "$status"
-    printf '%s\n' 'task_id: personal-model-behavior-parity' 'runtime: provider-neutral' 'model: unknown'
-    printf '%s\n' 'scenario: architecture,operations,chitchat' 'attempt: 2' 'exit_status: 0' 'duration_ms: 0'
+    printf '%s\n' 'task_id: agent-workflow-baseline' 'runtime: provider-neutral' 'model: unknown'
+    printf '%s\n' 'scenario: architecture,operations,conversation' 'attempt: 2' 'exit_status: 0' 'duration_ms: 0'
     printf '%s\n' 'output_ref: null' 'tool_summary: []'
     printf 'grader_summary: "%s"\n' "$summary"
     printf '%s\n' 'graders: []' 'tasks: []'
-    printf '%s\n' 'eval:' '  name: personal-model-behavior-parity' '  version: 0.1.0' "  executor: $engine" '  trials_per_task: 2'
+    printf '%s\n' 'eval:' '  name: agent-workflow-baseline' '  version: 0.2.0' "  executor: $engine" '  trials_per_task: 2'
     printf 'evidence:\n  - %s\n' "$eval_file"
     if [[ -n "$gap" ]]; then
       printf 'capability_gaps:\n  - "%s"\n' "$gap"
@@ -123,8 +123,8 @@ while (($#)); do
 done
 
 case "$suite" in
-  mock) eval_file="$plugin_root/evals/personal-model/eval.yaml" ;;
-  real) eval_file="$plugin_root/evals/personal-model/eval-real.yaml" ;;
+  mock) eval_file="$plugin_root/evals/workflow-baseline/eval.yaml" ;;
+  real) eval_file="$plugin_root/evals/workflow-baseline/eval-real.yaml" ;;
   *) printf 'unsupported suite: %s\n' "$suite" >&2; exit 2 ;;
 esac
 
@@ -136,15 +136,15 @@ case "$mode" in
     [[ -n "$(waza_binary)" ]] && printf 'waza_binary: available\n' || printf 'waza_binary: not-installed\n'
     ;;
   plan)
-    printf 'plugin_id: waza\nengine: %s\nsuite: %s\neval: %s\nscenarios: architecture,operations,chitchat\ntrials_per_task: 2\n' "$engine" "$suite" "$eval_file"
+    printf 'plugin_id: waza\nengine: %s\nsuite: %s\neval: %s\nscenarios: architecture,operations,conversation\ntrials_per_task: 2\n' "$engine" "$suite" "$eval_file"
     ;;
   run)
     case "$engine" in
       mock) write_result "$output" pass 'mock plan validated; no provider execution performed' ;;
       waza)
         [[ -n "$context_task" ]] || { printf 'status: error\n--engine waza requires --context-task for scope binding\n' >&2; exit 2; }
-        context_binary="${AGENT_CONTEXT_HARNESS_BIN:-${MIYAGO_CONTEXT_HARNESS_BIN:-${HOME}/.local/bin/miyago-context-harness}}"
-        context_root="${AGENT_FACTORY_WORKSPACE_ROOT:-${MIYAGO_AGENT_WORKSPACE_ROOT:-${HOME}/agent-workspace}}"
+        context_binary="${AGENT_CONTEXT_HARNESS_BIN:-${HOME}/.local/bin/context-harness}"
+        context_root="${AGENT_FACTORY_WORKSPACE_ROOT:-${HOME}/agent-workspace}"
         if [[ ! -x "$context_binary" ]]; then
           write_result "$output" capability_gap "Context Harness binary is unavailable: $context_binary" 'context harness binary unavailable'
           exit 1

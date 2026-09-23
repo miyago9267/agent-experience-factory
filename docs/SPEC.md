@@ -6,8 +6,8 @@ updated: 2026-08-21
 
 # 目的
 
-將 `agent-workspace` 與 `dotfile` 的既有零件收斂成一個可安裝、可診斷、
-可搬遷的 distribution layer；canonical source 仍維持分離。
+將通用 Context Harness 與工作流程零件整合成可安裝、可診斷、可搬遷的工具包；
+每台裝置的 routing、任務、個人模型與資料仍保留在本機來源。
 
 # 邊界
 
@@ -36,8 +36,9 @@ agent-workflow plugin run --id waza --engine mock --output <result>
 
 | 層 | 唯一來源 | Factory 責任 |
 |---|---|---|
-| Core Harness | `agent-workspace` | 發現、建置、呼叫、驗證 binary |
-| Runtime config | `dotfile/config/ai` | 接入、檢查、啟動 adapter |
+| Core Harness | Factory repository | 發現、建置、呼叫、驗證 binary |
+| Routing / tasks / personal model | 使用者本機 workspace | 供 Harness 載入，不進入公開 Factory |
+| Runtime config | 使用者 dotfile repository | 接入、檢查、啟動 adapter |
 | Private experience | `~/.local/share/agent-experience` | 匯出、匯入、權限與 scope 檢查 |
 | Jev decision | TypeSafe | Per-device opt-in; classifies filtered summaries |
 | Benchmark | Waza 或替代 runner | 只提供標準化結果，不寫回規則 |
@@ -52,8 +53,8 @@ bootstrap。Jev 的 `keep` 只寫入可攜經驗庫，不自動改寫其他規�
 
 # P1 完成條件
 
-- 一個 installer 能在 dry-run 中顯示所有來源、目標與將要改變的檔案，並能在缺少
-  Context Harness binary 時從 canonical workspace 自動 build/install。
+- 一個 installer 能在 dry-run 中顯示所有來源、目標與將要改變的檔案，並能從
+  Factory repository 自動 build/install Context Harness。
 - `doctor` 能辨識缺少的 source、binary、generated entry、runtime target 與
   non-entry boundary。
 - `bootstrap` 能呼叫 core sync，回傳可供 runtime 讀取的 bundle 路徑。
